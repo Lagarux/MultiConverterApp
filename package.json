@@ -1,0 +1,65 @@
+{
+  "name": "multitool",
+  "productName": "MultiConverter Pro",
+  "version": "1.0.0",
+  "description": "Hepsi bir arada medya ve belge dönüştürücü",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "icons:win": "node scripts/generate-ico.js",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "author": "FTG",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "docx": "^9.6.1",
+    "exceljs": "^4.3.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.5.31",
+    "mammoth": "^1.6.0",
+    "plyr": "^3.7.8",
+    "sharp": "^0.32.6"
+  },
+  "devDependencies": {
+    "decode-ico": "^0.4.1",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.9.1",
+    "png-to-ico": "^2.1.8"
+  },
+  "build": {
+    "asarUnpack": [
+      "**/node_modules/plyr/dist/*.mjs",
+      "**/node_modules/@ffmpeg-installer/**/*"
+    ],
+    "afterPack": "scripts/after-pack.js",
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "taskbar-icons/app.ico"
+      }
+    ],
+    "appId": "com.FTG.multiconverter",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "sign": null,
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

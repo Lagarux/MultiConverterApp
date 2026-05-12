@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MultiTool - Hepsi Bir Arada</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        :root {
+            --bg: #121212;
+            --sidebar: #1e1e1e;
+            --accent: #0078d4;
+            --text: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column; /* Üst çubuk ve içeriğin alt alta durması için */
+            height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* --- ÖZEL GÖREV ÇUBUĞU TASARIMI --- */
+        #custom-titlebar {
+            display: flex; justify-content: space-between; align-items: center;
+            height: 32px; background: #181818; border-bottom: 1px solid #333;
+            color: #ccc; user-select: none; z-index: 10000; width: 100%;
+        }
+        .titlebar-drag-region {
+            flex: 1; height: 100%; display: flex; align-items: center; padding-left: 15px;
+            -webkit-app-region: drag; /* Çubuğu sürüklenebilir yapar */
+            font-size: 0.85rem; font-weight: 500; letter-spacing: 1px;
+        }
+        .titlebar-controls { display: flex; -webkit-app-region: no-drag; }
+        .titlebar-controls button {
+            background: transparent; border: none; color: #ccc;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; cursor: pointer; transition: 0.2s; margin: 0; border-radius: 0;
+        }
+        .titlebar-controls button:hover { background: #333; }
+        .titlebar-controls button svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+            margin: 0 auto;
+        }
+        #btn-close:hover { background: #e81123; color: white; }
+
+        /* --- ANA UYGULAMA ALANI --- */
+        .app-container {
+            display: flex;
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        nav {
+            width: 250px;
+            background: var(--sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 1px solid #333;
+            z-index: 10;
+        }
+
+        nav h2 {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 30px;
+        }
+
+        .nav-item {
+            padding: 12px;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .nav-item:hover { background: #333; }
+        .nav-item.active { background: var(--accent); }
+
+        main {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Animasyonlu Geçişler */
+        .section { display: none; opacity: 0; transform: translateY(20px); transition: all 0.4s ease-out; }
+        .section.active { display: block; opacity: 1; transform: translateY(0); }
+
+        .card { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
+        button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        button:hover { background: #005a9e; }
+        input, select { background: #333; color: white; border: 1px solid #444; padding: 5px; border-radius: 4px; margin: 5px 0; }
+        
+        .drop-zone { border: 2px dashed #444; padding: 30px; text-align: center; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .drop-zone:hover { border-color: var(--accent); background: #252525; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e1e1e; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* Özel Yükleme Ekranı */
+        #loader-wrapper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #121212; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
+            transition: opacity 0.5s;
+        }
+
+        .loader {
+            border: 4px solid #333; border-top: 4px solid var(--accent);
+            border-radius: 50%; width: 50px; height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body>
+
+    <div id="loader-wrapper">
+        <div class="loader"></div>
+        <p style="margin-top: 20px; color: #aaa;">Sistem Hazırlanıyor...</p>
+    </div>
+
+    <div id="custom-titlebar">
+        <div class="titlebar-drag-region">
+            MultiConverter Pro
+        </div>
+        <div class="titlebar-controls">
+                <button id="btn-minimize" aria-label="Minimize">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-minus" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M5 12l14 0"/>
+                    </svg>
+                </button>
+                <button id="btn-maximize" aria-label="Maximize/Restore">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-square" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"/>
+                    </svg>
+                </button>
+                <button id="btn-close" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M18 6l-12 12"/>
+                        <path d="M6 6l12 12"/>
+                    </svg>
+                </button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <nav>
+            <h2>🛠️ MultiConverter</h2>
+            <div class="nav-item active" onclick="showSection('video-section')">🎥 Video/Ses</div>
+            <div class="nav-item" onclick="showSection('image-section')">🖼️ Görüntü İşleme</div>
+            <div class="nav-item" onclick="showSection('player-section')">🎬 Medya Oynatıcı</div>
+            <div class="nav-item" onclick="showSection('doc-section')">📄 Belge Dönüştürücü</div>
+        </nav>
+
+        <main>
+            <div id="video-section" class="section active">
+                <h1>Video & Ses Araçları</h1>
+                <div class="card">
+                    <div id="drop-zone" class="drop-zone">Videoyu Buraya Sürükleyin veya Seçmek İçin Tıklayın</div>
+                    <div id="video-status" style="margin-top:10px; color: #aaa;"></div>
+                    <div style="margin-top:15px;">
+                        <label>Hedef Format:</label>
+                        <select id="format-select">
+                            <option value="mp3">MP3</option>
+                            <option value="mp4">MP4</option>
+                            <option value="wav">WAV</option>
+                        </select>
+                        <br>
+                        <label>Başlangıç (sn):</label> <input type="number" id="start-time" value="0">
+                        <label>Bitiş (sn):</label> <input type="number" id="end-time" placeholder="Sonuna kadar">
+                        <br>
+                        <button id="convert-btn">Dönüştür ve Kırp</button>
+                        <progress id="progress-bar" value="0" max="100" style="display:none; width:100%; margin-top:10px;"></progress>
+                    </div>
+                </div>
+            </div>
+
+            <div id="image-section" class="section">
+                <h1>Görüntü Düzenleyici</h1>
+                <div class="card">
+                    <div id="image-drop-zone" class="drop-zone">Resmi Buraya Sürükleyin veya Seçmek İçin Tıklayın</div>
+                    <div id="image-preview" style="display:none; margin-top:15px; text-align:center;">
+                        <img id="preview-img" style="max-width:300px; border-radius:8px;">
+                    </div>
+                    <br>
+                    <input type="checkbox" id="watermark-checkbox"> <label>Özel Logo (Filigran) Ekle</label>
+                    <button id="select-logo-btn" style="display:none; background: #555; padding: 5px 10px; margin-left:10px; font-size: 0.8rem;">Logo Seç (PNG)</button>
+                    <span id="logo-path-text" style="font-size: 0.8rem; color: #aaa; margin-left: 5px;"></span>
+                    <div style="margin-top:15px;">
+                        <label>Format:</label>
+                        <select id="image-format-select">
+                            <option value="png">PNG</option>
+                            <option value="jpeg">JPEG</option>
+                            <option value="webp">WebP</option>
+                        </select>
+                        <label>Genişlik:</label> <input type="number" id="image-width" placeholder="Orijinal">
+                        <label>Yükseklik:</label> <input type="number" id="image-height" placeholder="Orijinal">
+                        <br>
+                        <input type="checkbox" id="grayscale-checkbox"> <label>Siyah-Beyaz Yap</label>
+                        <br>
+                        <button id="process-image-btn">Resmi Farklı Kaydet ve İşle</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="player-section" class="section">
+                <h1>Medya Oynatıcı</h1>
+                <div class="card">
+                    <video id="player" playsinline controls style="width:100%;"></video>
+                    <div style="margin-top:10px;">
+                        <button id="load-file-btn">Dosya Aç</button>
+                        <span id="current-file-name" style="margin-left:10px; color:#aaa;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="doc-section" class="section">
+                <h1>📄 Belge Dönüştürücü</h1>
+                <div class="card">
+                    <h3>Excel ➔ PDF Dönüştür</h3>
+                    <button id="select-excel-btn">Excel Dosyası Seç</button>
+                    <div id="excel-status" style="margin-top:10px; color:#aaa;"></div>
+                </div>
+                <div class="card">
+                    <h3>Word Okuyucu & Düzenleyici</h3>
+                    <button id="read-word-btn">Word Dosyası Aç</button>
+                    <div id="word-content" contenteditable="true" style="background: #fff; color: #000; padding: 15px; margin-top: 10px; min-height: 150px; border-radius: 5px;"></div>
+                    <button id="save-word-btn" style="background: #28a745;">Yeni Word Olarak Kaydet</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="Renderer.js"></script>
+    <script>
+        // Animasyonlu Sekme Geçişi
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => {
+                s.style.opacity = '0';
+                s.style.transform = 'translateY(20px)';
+                setTimeout(() => s.classList.remove('active'), 200);
+            });
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            setTimeout(() => {
+                const activeSection = document.getElementById(id);
+                activeSection.classList.add('active');
+                setTimeout(() => {
+                    activeSection.style.opacity = '1';
+                    activeSection.style.transform = 'translateY(0)';
+                }, 50);
+            }, 200);
+
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>
