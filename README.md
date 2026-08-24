@@ -4,13 +4,13 @@
 
 ## 🚀 Öne Çıkan Özellikler
 
-- 🎬 **Video ve Ses Dönüştürme:** `fluent-ffmpeg` entegrasyonu ile MP4, MKV, AVI, MP3 vb. formatları birbirine dönüştürme. Başlangıç/bitiş süresine göre video kırpma (trim) ve canlı ilerleme (progress) göstergesi.
-- 🖼️ **Gelişmiş Görüntü İşleme:** `sharp` ile yüksek performanslı resim işleme. Format değiştirme (JPG, PNG, WEBP), yeniden boyutlandırma, siyah-beyaz (grayscale) filtresi ve resimlerin köşesine **Logo / Filigran** ekleyebilme.
-- 📊 **Excel'den PDF'e Dönüşüm:** `exceljs` ve `jspdf-autotable` kullanılarak `.xlsx` verilerini tablo düzeninde, sayfa yapısı bozulmadan PDF olarak dışa aktarma.
-- 📝 **Word (.docx) Görüntüleme ve Kaydetme:** `mammoth` ile .docx dosyalarını metin olarak önizleme ve `docx` kütüphanesi yardımıyla oluşturulan içerikleri yeniden Word dosyasına yazdırma.
-- 🎨 **Özel Arayüz (Custom Titlebar):** Windows'un varsayılan başlık çubuğu yerine uygulama içine entegre edilmiş şık Kapat, Küçült ve Büyült (Minimize/Maximize/Restore) düğmeleri. Sürükle-bırak desteği.
-- ▶️ **Entegre Medya Oynatıcı:** `plyr` kütüphanesi kullanılarak uygulama içerisinde gelişmiş medya oynatma (hız, kalite ve altyazı desteği).
-- 📌 **Windows Görev Çubuğu:** Uygulama ikonuna sağ tıklandığında "Yeni Dönüştürücü Aç" özelliği (jumplist).
+- 🎬 **Video ve Ses Dönüştürme & Akıllı Kırpıcı:** `fluent-ffmpeg` entegrasyonu ile MP4, MKV, AVI, MP3 vb. formatları birbirine dönüştürme. Canlı video önizlemesi ile **Akıllı Kırpıcı (Smart Clipper)** üzerinden başlangıç/bitiş süresini tek tıkla seçme.
+- 🖼️ **Gelişmiş Görüntü İşleme & Kırpma:** `sharp` ve `Cropper.js` entegrasyonu. Resimleri canlı önizleme üzerinde interaktif kırpma, format değiştirme, yeniden boyutlandırma, siyah-beyaz filtre ve **Dinamik Filigran** (istenen köşeye logo) ekleyebilme.
+- 📄 **Kapsamlı PDF Araçları:** `pdf-lib` ve `pdf.js` ile PDF birleştirme (merge), belirli bir sayfadan PDF bölme (split), PDF önizleme ve PDF'leri Word'e dönüştürme (metin veya görsel olarak).
+- 🌐 **Sosyal Medya İndirici:** `yt-dlp` entegrasyonu ile YouTube, Instagram, X vb. platformlardan 4K video, MP3 veya **sadece kapak fotoğrafı (thumbnail)** indirme.
+- 📊 **Excel ve Word Araçları:** Excel (.xlsx) dosyalarını PDF olarak kaydetme ve Word (.docx) belgelerini uygulama içinde görüntüleyip basitçe düzenleme.
+- 🎨 **Modern "Glassmorphism" Arayüz:** Native HTML5 sürükle-bırak (Drag & Drop) desteği, özel çerçevesiz (frameless) pencere, yumuşak geçişler ve karanlık tema (dark mode) odaklı şık tasarım.
+- ▶️ **Entegre Medya Oynatıcı:** `plyr` kütüphanesi kullanılarak uygulama içerisinde gelişmiş medya oynatma.
 
 ## 🛠️ Kullanılan Teknolojiler 
 

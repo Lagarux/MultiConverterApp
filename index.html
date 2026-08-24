@@ -1,161 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>MultiTool - Hepsi Bir Arada</title>
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.plyr.io https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.plyr.io https://cdnjs.cloudflare.com; font-src 'self'; img-src 'self' data: file: blob:; media-src 'self' file: blob:;">
+    <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <style>
-        :root {
-            --bg: #121212;
-            --sidebar: #1e1e1e;
-            --accent: #0078d4;
-            --text: #ffffff;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: column; /* Üst çubuk ve içeriğin alt alta durması için */
-            height: 100vh;
-            background: var(--bg);
-            color: var(--text);
-            overflow: hidden;
-        }
-
-        /* --- ÖZEL GÖREV ÇUBUĞU TASARIMI --- */
-        #custom-titlebar {
-            display: flex; justify-content: space-between; align-items: center;
-            height: 32px; background: #181818; border-bottom: 1px solid #333;
-            color: #ccc; user-select: none; z-index: 10000; width: 100%;
-        }
-        .titlebar-drag-region {
-            flex: 1; height: 100%; display: flex; align-items: center; padding-left: 15px;
-            -webkit-app-region: drag; /* Çubuğu sürüklenebilir yapar */
-            font-size: 0.85rem; font-weight: 500; letter-spacing: 1px;
-        }
-        .titlebar-controls { display: flex; -webkit-app-region: no-drag; }
-        .titlebar-controls button {
-            background: transparent; border: none; color: #ccc;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; cursor: pointer; transition: 0.2s; margin: 0; border-radius: 0;
-        }
-        .titlebar-controls button:hover { background: #333; }
-        .titlebar-controls button svg {
-            width: 18px;
-            height: 18px;
-            display: block;
-            margin: 0 auto;
-        }
-        #btn-close:hover { background: #e81123; color: white; }
-
-        /* --- ANA UYGULAMA ALANI --- */
-        .app-container {
-            display: flex;
-            flex: 1;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        nav {
-            width: 250px;
-            background: var(--sidebar);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            border-right: 1px solid #333;
-            z-index: 10;
-        }
-
-        nav h2 {
-            font-size: 1.2rem;
-            color: var(--accent);
-            margin-bottom: 30px;
-        }
-
-        .nav-item {
-            padding: 12px;
-            margin: 5px 0;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: 0.3s;
-        }
-
-        .nav-item:hover { background: #333; }
-        .nav-item.active { background: var(--accent); }
-
-        main {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        /* Animasyonlu Geçişler */
-        .section { display: none; opacity: 0; transform: translateY(20px); transition: all 0.4s ease-out; }
-        .section.active { display: block; opacity: 1; transform: translateY(0); }
-
-        .card { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
-        button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        button:hover { background: #005a9e; }
-        input, select { background: #333; color: white; border: 1px solid #444; padding: 5px; border-radius: 4px; margin: 5px 0; }
-        
-        .drop-zone { border: 2px dashed #444; padding: 30px; text-align: center; border-radius: 10px; cursor: pointer; transition: 0.3s; }
-        .drop-zone:hover { border-color: var(--accent); background: #252525; }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e1e1e; }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-        /* Özel Yükleme Ekranı */
-        #loader-wrapper {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #121212; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999;
-            transition: opacity 0.5s;
-        }
-
-        .loader {
-            border: 4px solid #333; border-top: 4px solid var(--accent);
-            border-radius: 50%; width: 50px; height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
-
 <body>
-
     <div id="loader-wrapper">
         <div class="loader"></div>
         <p style="margin-top: 20px; color: #aaa;">Sistem Hazırlanıyor...</p>
     </div>
 
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
     <div id="custom-titlebar">
-        <div class="titlebar-drag-region">
-            MultiConverter Pro
-        </div>
+        <div class="titlebar-drag-region">MultiConverter Pro</div>
         <div class="titlebar-controls">
-                <button id="btn-minimize" aria-label="Minimize">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-minus" aria-hidden="true">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M5 12l14 0"/>
-                    </svg>
-                </button>
-                <button id="btn-maximize" aria-label="Maximize/Restore">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-square" aria-hidden="true">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"/>
-                    </svg>
-                </button>
-                <button id="btn-close" aria-label="Close">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x" aria-hidden="true">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M18 6l-12 12"/>
-                        <path d="M6 6l12 12"/>
-                    </svg>
-                </button>
+            <button id="btn-minimize" aria-label="Minimize">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0"/></svg>
+            </button>
+            <button id="btn-maximize" aria-label="Maximize/Restore">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"/></svg>
+            </button>
+            <button id="btn-close" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+            </button>
         </div>
     </div>
 
@@ -166,14 +41,25 @@
             <div class="nav-item" onclick="showSection('image-section')">🖼️ Görüntü İşleme</div>
             <div class="nav-item" onclick="showSection('player-section')">🎬 Medya Oynatıcı</div>
             <div class="nav-item" onclick="showSection('doc-section')">📄 Belge Dönüştürücü</div>
+            <div class="nav-item" onclick="showSection('social-section')">🌐 İnternetten İndir</div>
         </nav>
 
         <main>
+            <!-- Video & Ses Araçları -->
             <div id="video-section" class="section active">
                 <h1>Video & Ses Araçları</h1>
                 <div class="card">
                     <div id="drop-zone" class="drop-zone">Videoyu Buraya Sürükleyin veya Seçmek İçin Tıklayın</div>
                     <div id="video-status" style="margin-top:10px; color: #aaa;"></div>
+                    
+                    <div id="video-clipper-preview" style="display:none; margin-top:15px; border:1px solid #444; padding:10px; border-radius:8px; background: rgba(0,0,0,0.2);">
+                        <video id="clipper-video" controls style="width:100%; border-radius:4px; max-height:300px; background:#000;"></video>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button id="set-start-btn" style="flex:1; background:#10b981;">[ İzlenilen Anı Başlangıç Yap ]</button>
+                            <button id="set-end-btn" style="flex:1; background:#ef4444;">[ İzlenilen Anı Bitiş Yap ]</button>
+                        </div>
+                    </div>
+
                     <div style="margin-top:15px;">
                         <label>Hedef Format:</label>
                         <select id="format-select">
@@ -191,6 +77,7 @@
                 </div>
             </div>
 
+            <!-- Görüntü Düzenleyici -->
             <div id="image-section" class="section">
                 <h1>Görüntü Düzenleyici</h1>
                 <div class="card">
@@ -202,6 +89,15 @@
                     <input type="checkbox" id="watermark-checkbox"> <label>Özel Logo (Filigran) Ekle</label>
                     <button id="select-logo-btn" style="display:none; background: #555; padding: 5px 10px; margin-left:10px; font-size: 0.8rem;">Logo Seç (PNG)</button>
                     <span id="logo-path-text" style="font-size: 0.8rem; color: #aaa; margin-left: 5px;"></span>
+                    
+                    <select id="watermark-position" style="display:none; font-size: 0.8rem; margin-left: 10px;">
+                        <option value="southeast">Sağ Alt</option>
+                        <option value="southwest">Sol Alt</option>
+                        <option value="northeast">Sağ Üst</option>
+                        <option value="northwest">Sol Üst</option>
+                        <option value="center">Orta</option>
+                    </select>
+
                     <div style="margin-top:15px;">
                         <label>Format:</label>
                         <select id="image-format-select">
@@ -209,16 +105,18 @@
                             <option value="jpeg">JPEG</option>
                             <option value="webp">WebP</option>
                         </select>
-                        <label>Genişlik:</label> <input type="number" id="image-width" placeholder="Orijinal">
-                        <label>Yükseklik:</label> <input type="number" id="image-height" placeholder="Orijinal">
+                        <label>Genişlik:</label> <input type="number" id="image-width" placeholder="Kırpılan Orj">
+                        <label>Yükseklik:</label> <input type="number" id="image-height" placeholder="Kırpılan Orj">
                         <br>
                         <input type="checkbox" id="grayscale-checkbox"> <label>Siyah-Beyaz Yap</label>
                         <br>
-                        <button id="process-image-btn">Resmi Farklı Kaydet ve İşle</button>
+                        <button id="crop-start-btn" style="background:#8b5cf6;">Önizlemede Kırpma Aracı</button>
+                        <button id="process-image-btn">Resmi İşle ve Kaydet</button>
                     </div>
                 </div>
             </div>
 
+            <!-- Medya Oynatıcı -->
             <div id="player-section" class="section">
                 <h1>Medya Oynatıcı</h1>
                 <div class="card">
@@ -230,26 +128,124 @@
                 </div>
             </div>
 
+            <!-- Belge Dönüştürücü -->
             <div id="doc-section" class="section">
                 <h1>📄 Belge Dönüştürücü</h1>
                 <div class="card">
                     <h3>Excel ➔ PDF Dönüştür</h3>
-                    <button id="select-excel-btn">Excel Dosyası Seç</button>
-                    <div id="excel-status" style="margin-top:10px; color:#aaa;"></div>
+                    <div id="select-excel-btn" class="drop-zone" style="padding: 20px;">Excel Dosyasını Sürükleyin veya Seçin (.xlsx)</div>
                 </div>
                 <div class="card">
+                    <h3>PDF ➔ Word Dönüştür</h3>
+                    <p style="font-size: 13px; color: #ccc;">PDF'i seçin, önizleyin ve nasıl dönüştüreceğinize karar verin.</p>
+                    <div id="select-pdf-btn" class="drop-zone" style="padding: 20px;">PDF Dosyasını Sürükleyin veya Seçin</div>
+                    
+                    <div id="pdf-preview-container" style="display: none; margin-top: 15px; border: 1px solid #444; border-radius: 8px; padding: 10px; background: #222;">
+                        <embed id="pdf-preview-embed" src="" type="application/pdf" width="100%" height="400px" style="border-radius: 4px;" />
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: space-between;">
+                            <button id="pdf-export-text-btn" style="flex: 1; background: #28a745;">Metin Olarak Aktar (Düzenlenebilir)</button>
+                            <button id="pdf-export-image-btn" style="flex: 1; background: #0078D7;">Görsel Olarak Aktar (Tasarım Korunur)</button>
+                        </div>
+                        <progress id="pdf-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px;"></progress>
+                    </div>
+                </div>
+
+                <!-- PDF Araçları (Birleştir & Böl) -->
+                <div class="card">
+                    <h3>PDF Birleştir ve Böl</h3>
+                    <p style="font-size: 13px; color: #ccc;">Birden fazla PDF'i birleştirebilir veya bir PDF'i bölebilirsiniz.</p>
+                    
+                    <div style="margin-bottom:15px;">
+                        <h4>PDF Birleştir</h4>
+                        <div id="merge-pdf-drop-zone" class="drop-zone" style="padding: 15px; margin-bottom: 5px;">PDF'leri Seç (Çoklu Seçim)</div>
+                        <div id="merge-files-list" style="font-size:0.8rem; color:#aaa; margin-bottom:10px;"></div>
+                        <button id="merge-pdf-btn" style="background: #e67e22;">PDF'leri Birleştir</button>
+                    </div>
+
+                    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+
+                    <div>
+                        <h4>PDF Böl</h4>
+                        <div id="split-pdf-drop-zone" class="drop-zone" style="padding: 15px; margin-bottom: 5px;">Bölünecek PDF'i Seç</div>
+                        <div id="split-file-name" style="font-size:0.8rem; color:#aaa; margin-bottom:10px;"></div>
+                        <label>Şu sayfadan sonra böl:</label>
+                        <input type="number" id="split-page-number" min="1" value="1" style="width:60px;">
+                        <br><br>
+                        <button id="split-pdf-btn" style="background: #e74c3c;">PDF'i Böl</button>
+                    </div>
+                </div>
+
+                <div class="card">
                     <h3>Word Okuyucu & Düzenleyici</h3>
-                    <button id="read-word-btn">Word Dosyası Aç</button>
-                    <div id="word-content" contenteditable="true" style="background: #fff; color: #000; padding: 15px; margin-top: 10px; min-height: 150px; border-radius: 5px;"></div>
-                    <button id="save-word-btn" style="background: #28a745;">Yeni Word Olarak Kaydet</button>
+                    <button id="read-word-btn" style="margin-bottom: 10px;">Word Dosyası Aç</button>
+                    
+                    <div id="word-toolbar" style="display: none; gap: 5px; margin-bottom: 5px; flex-wrap: wrap;">
+                        <button class="toolbar-btn" onclick="document.execCommand('bold', false, null)"><b>K</b></button>
+                        <button class="toolbar-btn" onclick="document.execCommand('italic', false, null)"><i>T</i></button>
+                        <button class="toolbar-btn" onclick="document.execCommand('underline', false, null)"><u>A</u></button>
+                        <button class="toolbar-btn" onclick="document.execCommand('formatBlock', false, 'H1')">H1</button>
+                        <button class="toolbar-btn" onclick="document.execCommand('formatBlock', false, 'H2')">H2</button>
+                        <button class="toolbar-btn" onclick="document.execCommand('insertUnorderedList', false, null)">• Liste</button>
+                        <button class="toolbar-btn" onclick="document.execCommand('justifyLeft', false, null)">Sol</button>
+                        <button class="toolbar-btn" onclick="document.execCommand('justifyCenter', false, null)">Orta</button>
+                        <button class="toolbar-btn" onclick="document.execCommand('removeFormat', false, null)">Temizle</button>
+                    </div>
+
+                    <div id="word-content" contenteditable="true" style="background: #fff; color: #000; padding: 20px; min-height: 200px; border-radius: 5px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); outline: none;">
+                        Lütfen düzenlemek için bir Word belgesi açın...
+                    </div>
+                    
+                    <button id="save-word-btn" style="background: #28a745; margin-top: 15px;">Yeni Word Olarak Kaydet</button>
+                </div>
+            </div>
+
+            <div id="social-section" class="section">
+                <h1>🌐 İnternetten İndir</h1>
+                <div class="card">
+                    <p>YouTube, Instagram, X (Twitter), Reddit, Facebook vb. sitelerden medya indirin.</p>
+                    
+                    <label for="social-url">Medya URL'si:</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="social-url" placeholder="https://www.youtube.com/watch?v=..." style="flex: 1;" />
+                        <button id="analyze-social-btn" style="background: #0078D7; width: auto; margin: 0;">Analiz Et</button>
+                    </div>
+
+                    <div id="social-options-pane" style="display: none;">
+                        <div style="margin-top: 10px;">
+                            <label>Format Seçimi:</label>
+                            <select id="social-format">
+                                <option value="mp4">Video (MP4 - Max 1080p)</option>
+                                <option value="mkv">Video (MKV - 4K Destekli)</option>
+                                <option value="webm">Video (WEBM - 4K Destekli)</option>
+                                <option value="mp3">Sadece Ses (MP3)</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-top: 10px;" id="social-quality-container">
+                            <label>Video Kalitesi:</label>
+                            <select id="social-quality">
+                                <!-- Dinamik olarak doldurulacak -->
+                            </select>
+                        </div>
+                        
+                        <div style="display:flex; gap:10px; margin-top:15px;">
+                            <button id="download-social-btn" style="flex:2; background:#e74c3c;">İndirmeyi Başlat</button>
+                            <button id="download-thumbnail-btn" style="flex:1; background:#f39c12;">Sadece Küçük Resmi (Thumbnail) İndir</button>
+                        </div>
+
+                        <progress id="download-progress-bar" value="0" max="100" style="display:none; width:100%; margin-top:10px;"></progress>
+                        <div id="social-status" style="margin-top:10px; color: #aaa; text-align: center; font-size: 0.9rem;"></div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Plyr Library Load via CDN -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <script src="Renderer.js"></script>
     <script>
-        // Animasyonlu Sekme Geçişi
         function showSection(id) {
             document.querySelectorAll('.section').forEach(s => {
                 s.style.opacity = '0';
