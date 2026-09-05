@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <title>MultiTool - Hepsi Bir Arada</title>
     <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.plyr.io https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.plyr.io https://cdnjs.cloudflare.com; font-src 'self'; img-src 'self' data: file: blob:; media-src 'self' file: blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: file: blob:; media-src 'self' file: blob:;">
     <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <link rel="stylesheet" href="libs/plyr/plyr.css" />
+    <link rel="stylesheet" href="libs/cropperjs/cropper.min.css" />
+    <script src="libs/cropperjs/cropper.min.js"></script>
 </head>
 <body>
     <div id="loader-wrapper">
@@ -41,6 +41,7 @@
             <div class="nav-item" onclick="showSection('image-section')">🖼️ Görüntü İşleme</div>
             <div class="nav-item" onclick="showSection('player-section')">🎬 Medya Oynatıcı</div>
             <div class="nav-item" onclick="showSection('doc-section')">📄 Belge Dönüştürücü</div>
+            <div class="nav-item" onclick="showSection('dict-section')">📖 Sözlük & Çeviri</div>
             <div class="nav-item" onclick="showSection('social-section')">🌐 İnternetten İndir</div>
         </nav>
 
@@ -63,16 +64,53 @@
                     <div style="margin-top:15px;">
                         <label>Hedef Format:</label>
                         <select id="format-select">
-                            <option value="mp3">MP3</option>
-                            <option value="mp4">MP4</option>
-                            <option value="wav">WAV</option>
+                            <optgroup label="🎬 Video Formatları">
+                                <option value="mp4" selected>MP4 (H.264 / AAC - En Uyumlu)</option>
+                                <option value="mkv">MKV (Matroska - Yüksek Kalite)</option>
+                                <option value="webm">WEBM (VP9 / Web Video)</option>
+                                <option value="avi">AVI (Xvid / Mpeg4)</option>
+                                <option value="mov">MOV (Apple QuickTime)</option>
+                                <option value="wmv">WMV (Windows Media Video)</option>
+                                <option value="flv">FLV (Flash Video)</option>
+                                <option value="gif">GIF (Animasyon)</option>
+                                <option value="ts">TS (MPEG Transport Stream)</option>
+                                <option value="ogv">OGV (Ogg Video)</option>
+                                <option value="3gp">3GP (Mobil Video)</option>
+                            </optgroup>
+                            <optgroup label="🎵 Ses Formatları">
+                                <option value="mp3">MP3 (MPEG Audio - 320kbps)</option>
+                                <option value="wav">WAV (Kayıpsız / Sıkıştırmasız PCM)</option>
+                                <option value="flac">FLAC (Kayıpsız Yüksek Kalite)</option>
+                                <option value="m4a">M4A (Apple Audio AAC)</option>
+                                <option value="aac">AAC (Gelişmiş Ses Kodlaması)</option>
+                                <option value="ogg">OGG (Vorbis Ses)</option>
+                                <option value="opus">OPUS (Modern Yüksek Verimli Ses)</option>
+                                <option value="wma">WMA (Windows Media Audio)</option>
+                                <option value="aiff">AIFF (Apple Sıkıştırmasız Ses)</option>
+                                <option value="ac3">AC3 (Dolby Digital Surround)</option>
+                            </optgroup>
                         </select>
                         <br>
                         <label>Başlangıç (sn):</label> <input type="number" id="start-time" value="0">
                         <label>Bitiş (sn):</label> <input type="number" id="end-time" placeholder="Sonuna kadar">
                         <br>
                         <button id="convert-btn">Dönüştür ve Kırp</button>
-                        <progress id="progress-bar" value="0" max="100" style="display:none; width:100%; margin-top:10px;"></progress>
+                        
+                        <!-- Video/Ses Gelişmiş Animasyonlu İşlem Çubuğu -->
+                        <div id="media-progress-box" class="animated-progress-container" style="display:none;">
+                            <div class="animated-progress-header">
+                                <span id="media-progress-stage" class="progress-stage-text">🎬 Hazırlanıyor...</span>
+                                <span id="media-progress-percent" class="progress-percent-badge">%0</span>
+                            </div>
+                            <div class="animated-progress-track">
+                                <div id="media-progress-bar" class="animated-progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <div class="animated-progress-footer">
+                                <span id="media-progress-time" class="progress-stat-pill">⏱️ Süre: 00:00:00</span>
+                                <span id="media-progress-fps" class="progress-stat-pill">⚡ Hız: -- FPS</span>
+                                <span id="media-progress-size" class="progress-stat-pill">📦 Boyut: --</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -120,6 +158,9 @@
             <div id="player-section" class="section">
                 <h1>Medya Oynatıcı</h1>
                 <div class="card">
+                    <div id="player-drop-zone" class="drop-zone" style="padding: 15px; margin-bottom: 15px;">
+                        Medya Dosyasını Buraya Sürükleyin veya Seçmek İçin Tıklayın (Tüm Formatlar Desteklenir)
+                    </div>
                     <video id="player" playsinline controls style="width:100%;"></video>
                     <div style="margin-top:10px;">
                         <button id="load-file-btn">Dosya Aç</button>
@@ -132,8 +173,32 @@
             <div id="doc-section" class="section">
                 <h1>📄 Belge Dönüştürücü</h1>
                 <div class="card">
-                    <h3>Excel ➔ PDF Dönüştür</h3>
-                    <div id="select-excel-btn" class="drop-zone" style="padding: 20px;">Excel Dosyasını Sürükleyin veya Seçin (.xlsx)</div>
+                    <h3>⚡ Evrensel Belge Dönüştürücü</h3>
+                    <p style="font-size: 13px; color: #ccc;">PDF, Word (DOCX), Excel (XLSX/XLS), CSV, Metin (TXT), Markdown (MD), HTML, JSON ve Resimleri birbirine dönüştürün.</p>
+                    <div id="universal-doc-drop-zone" class="drop-zone" style="padding: 25px;">Belge veya Resim Sürükleyin veya Seçmek İçin Tıklayın</div>
+                    <div id="universal-doc-info" style="margin-top: 10px; font-size: 0.9rem; color: #38bdf8; display: none;"></div>
+
+                    <div id="universal-doc-controls" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                        <label>Dönüştürülecek Format:</label>
+                        <select id="universal-target-format" style="margin-left: 10px; padding: 6px 12px; border-radius: 4px; background: #2a2a2a; color: #fff; border: 1px solid #444;">
+                            <!-- Dinamik olarak doldurulacak -->
+                        </select>
+                        <button id="convert-universal-doc-btn" style="margin-left: 10px; background: #10b981; padding: 8px 16px;">Dönüştür ve Kaydet</button>
+                    </div>
+
+                    <!-- Belge Dönüştürücü Gelişmiş Animasyonlu İşlem Çubuğu -->
+                    <div id="doc-progress-box" class="animated-progress-container" style="display:none;">
+                        <div class="animated-progress-header">
+                            <span id="doc-progress-stage" class="progress-stage-text">📄 Belge İşleniyor...</span>
+                            <span id="doc-progress-percent" class="progress-percent-badge">%0</span>
+                        </div>
+                        <div class="animated-progress-track">
+                            <div id="doc-progress-bar" class="animated-progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="animated-progress-footer">
+                            <span id="doc-progress-detail" class="progress-stat-pill">İşlem adımları yürütülüyor...</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="card">
                     <h3>PDF ➔ Word Dönüştür</h3>
@@ -147,7 +212,20 @@
                             <button id="pdf-export-text-btn" style="flex: 1; background: #28a745;">Metin Olarak Aktar (Düzenlenebilir)</button>
                             <button id="pdf-export-image-btn" style="flex: 1; background: #0078D7;">Görsel Olarak Aktar (Tasarım Korunur)</button>
                         </div>
-                        <progress id="pdf-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px;"></progress>
+                        
+                        <!-- PDF Önizleme Sayfa İşleme Çubuğu -->
+                        <div id="pdf-progress-box" class="animated-progress-container" style="display:none; margin-top:12px;">
+                            <div class="animated-progress-header">
+                                <span id="pdf-progress-stage" class="progress-stage-text">📄 PDF Sayfaları İşleniyor...</span>
+                                <span id="pdf-progress-percent" class="progress-percent-badge">%0</span>
+                            </div>
+                            <div class="animated-progress-track">
+                                <div id="pdf-progress-bar" class="animated-progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <div class="animated-progress-footer">
+                                <span id="pdf-progress-detail" class="progress-stat-pill">Sayfa: 0 / 0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -234,16 +312,177 @@
                             <button id="download-thumbnail-btn" style="flex:1; background:#f39c12;">Sadece Küçük Resmi (Thumbnail) İndir</button>
                         </div>
 
-                        <progress id="download-progress-bar" value="0" max="100" style="display:none; width:100%; margin-top:10px;"></progress>
+                        <!-- Sosyal Medya İndirici Gelişmiş Animasyonlu İşlem Çubuğu -->
+                        <div id="social-progress-box" class="animated-progress-container" style="display:none;">
+                            <div class="animated-progress-header">
+                                <span id="social-progress-stage" class="progress-stage-text">🌐 İndirme Başlatılıyor...</span>
+                                <span id="social-progress-percent" class="progress-percent-badge">%0</span>
+                            </div>
+                            <div class="animated-progress-track">
+                                <div id="social-progress-bar" class="animated-progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <div class="animated-progress-footer">
+                                <span id="social-progress-speed" class="progress-stat-pill">⚡ Hız: --</span>
+                                <span id="social-progress-eta" class="progress-stat-pill">⏳ Kalan Süre: --</span>
+                            </div>
+                        </div>
                         <div id="social-status" style="margin-top:10px; color: #aaa; text-align: center; font-size: 0.9rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gömülü Evrensel Sözlük ve İnternetsiz Çeviri -->
+            <div id="dict-section" class="section">
+                <h1>📖 Evrensel Sözlük & İnternetsiz Çeviri</h1>
+                
+                <!-- Dil Seçimi ve Yön Değiştirme -->
+                <div class="card" style="padding: 16px 24px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="font-weight: 600; color: #94a3b8;">Kaynak Dil:</label>
+                            <select id="dict-source-lang" class="lang-select">
+                                <option value="en" selected>🇬🇧 İngilizce (English)</option>
+                                <option value="tr">🇹🇷 Türkçe (Turkish)</option>
+                                <option value="de">🇩🇪 Almanca (Deutsch)</option>
+                                <option value="fr">🇫🇷 Fransızca (Français)</option>
+                                <option value="es">🇪🇸 İspanyolca (Español)</option>
+                                <option value="ru">🇷🇺 Rusça (Русский)</option>
+                                <option value="it">🇮🇹 İtalyanca (Italiano)</option>
+                                <option value="ar">🇸🇦 Arapça (العربية)</option>
+                            </select>
+                        </div>
+
+                        <button id="swap-dict-lang-btn" title="Dilleri Değiştir" style="border-radius: 50%; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; background: #3b82f6; box-shadow: 0 4px 14px rgba(59,130,246,0.4); margin-top: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16l-4 -4l4 -4"/><path d="M3 12h18"/><path d="M17 8l4 4l-4 4"/></svg>
+                        </button>
+
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="font-weight: 600; color: #94a3b8;">Hedef Dil:</label>
+                            <select id="dict-target-lang" class="lang-select">
+                                <option value="tr" selected>🇹🇷 Türkçe (Turkish)</option>
+                                <option value="en">🇬🇧 İngilizce (English)</option>
+                                <option value="de">🇩🇪 Almanca (Deutsch)</option>
+                                <option value="fr">🇫🇷 Fransızca (Français)</option>
+                                <option value="es">🇪🇸 İspanyolca (Español)</option>
+                                <option value="ru">🇷🇺 Rusça (Русский)</option>
+                                <option value="it">🇮🇹 İtalyanca (Italiano)</option>
+                                <option value="ar">🇸🇦 Arapça (العربية)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mod Seçim Sekmeleri -->
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <button id="tab-dictionary-btn" class="dict-tab-btn active" style="flex: 1; padding: 12px; font-size: 1rem; margin-top: 0;">🔍 Detaylı Sözlük Arama</button>
+                    <button id="tab-translator-btn" class="dict-tab-btn" style="flex: 1; padding: 12px; font-size: 1rem; background: rgba(255,255,255,0.07); color: #ccc; margin-top: 0;">⚡ İnternetsiz Cümle / Metin Çevirici</button>
+                </div>
+
+                <!-- 1. DETAYLI SÖZLÜK ARAMA MODU -->
+                <div id="dict-lookup-mode" class="card">
+                    <div style="position: relative;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="dict-search-input" placeholder="Aranacak kelimeyi veya ifadeyi yazın..." style="flex: 1; font-size: 1.05rem; padding: 12px 16px; border-radius: 10px; margin: 0;" autocomplete="off" />
+                            <button id="dict-search-btn" style="padding: 10px 24px; font-size: 1rem; background: #2563eb; margin-top: 0;">Ara</button>
+                        </div>
+                        <!-- Canlı Öneri Kutusu (Autocomplete) -->
+                        <div id="dict-autocomplete-box" class="autocomplete-dropdown" style="display: none;"></div>
+                    </div>
+
+                    <!-- Sözlük Sonuç Kartı -->
+                    <div id="dict-result-card" style="display: none; margin-top: 25px; padding: 22px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.4);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <span id="dict-word-head" style="font-size: 1.8rem; font-weight: 700; color: #60a5fa;"></span>
+                                <span id="dict-word-ipa" style="font-family: monospace; color: #94a3b8; font-size: 1.1rem;"></span>
+                                <span id="dict-word-type" class="badge-tag"></span>
+                                <span id="dict-word-level" class="badge-tag" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4); display: none;"></span>
+                                <span id="dict-word-learned-badge" class="badge-tag" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border-color: rgba(168, 85, 247, 0.4); display: none;">🧠 Kelime Haznesine Eklendi</span>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button id="dict-speak-word-btn" class="icon-action-btn" title="Sesli Telaffuz">🔊 Sesli Dinle</button>
+                                <button id="dict-fav-word-btn" class="icon-action-btn" title="Favorilere Ekle">⭐ Favori</button>
+                            </div>
+                        </div>
+
+                        <!-- Detaylı Anlamlar -->
+                        <div style="margin-top: 15px;">
+                            <h4 style="color: #94a3b8; margin-bottom: 8px; font-size: 0.9rem; letter-spacing: 0.5px;">DETAYLI ANLAMLAR:</h4>
+                            <div id="dict-meanings-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        </div>
+
+                        <!-- İngilizce Tanımlar (Varsa) -->
+                        <div id="dict-definitions-wrapper" style="margin-top: 15px; display: none;">
+                            <h4 style="color: #94a3b8; margin-bottom: 8px; font-size: 0.9rem; letter-spacing: 0.5px;">TANIMLAR:</h4>
+                            <div id="dict-definitions-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        </div>
+
+                        <!-- Örnek Cümleler ve Kullanımlar -->
+                        <div id="dict-example-wrapper" style="margin-top: 18px; display: none;">
+                            <h4 style="color: #94a3b8; margin-bottom: 8px; font-size: 0.9rem; letter-spacing: 0.5px;">ÖRNEK CÜMLELER & KULLANIMLAR:</h4>
+                            <div id="dict-examples-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                        </div>
+
+                        <!-- Eş Anlamlılar -->
+                        <div id="dict-synonyms-wrapper" style="margin-top: 15px; display: none;">
+                            <h4 style="color: #94a3b8; margin-bottom: 6px; font-size: 0.9rem; letter-spacing: 0.5px;">EŞ ANLAMLILAR:</h4>
+                            <div id="dict-word-synonyms" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Geçmiş ve Favori Kelimeler Sekmeleri -->
+                    <div style="margin-top: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h4 style="color: #cbd5e1; margin: 0; font-size: 0.95rem;">Son Aramalar ve Favoriler</h4>
+                                <span id="learned-words-stat" style="font-size: 0.78rem; background: rgba(168, 85, 247, 0.15); color: #c084fc; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3);">🧠 0 Kelime Öğrenildi</span>
+                            </div>
+                            <button id="clear-dict-history-btn" style="background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 4px 10px; font-size: 0.8rem; margin-top: 0;">Geçmişi Temizle</button>
+                        </div>
+                        <div id="dict-history-chips" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
+                    </div>
+                </div>
+
+                <!-- 2. İNTERNETSİZ METİN & CÜMLE ÇEVİRİSİ MODU -->
+                <div id="dict-translator-mode" class="card" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #94a3b8;" id="trans-source-label">Kaynak Metin</span>
+                                <button id="dict-speak-src-btn" class="icon-action-btn" title="Kaynak Metni Seslendir">🔊 Dinle</button>
+                            </div>
+                            <textarea id="translator-source-text" placeholder="Çevirmek istediğiniz metni veya cümleyi buraya yazın..." style="width: 100%; height: 160px; background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; font-size: 1rem; resize: vertical; box-sizing: border-box;"></textarea>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                <button id="do-translate-btn" style="background: #10b981; padding: 10px 24px; margin-top: 0;">⚡ Çevir (İnternetsiz)</button>
+                                <button id="clear-trans-btn" style="background: #475569; padding: 8px 16px; font-size: 0.85rem; margin-top: 0;">Temizle</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #38bdf8;" id="trans-target-label">Hedef Çeviri</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button id="dict-speak-target-btn" class="icon-action-btn" title="Çeviriyi Seslendir">🔊 Dinle</button>
+                                    <button id="copy-translation-btn" class="icon-action-btn" title="Çeviriyi Kopyala">📋 Kopyala</button>
+                                </div>
+                            </div>
+                            <textarea id="translator-target-text" readonly placeholder="Çeviri burada görüntülenecektir..." style="width: 100%; height: 160px; background: rgba(15,23,42,0.6); color: #38bdf8; border: 1px solid rgba(56,189,248,0.35); border-radius: 8px; padding: 12px; font-size: 1.05rem; resize: vertical; font-weight: 500; box-sizing: border-box;"></textarea>
+                            <div id="trans-info-status" style="font-size: 0.8rem; color: #94a3b8; margin-top: 10px;">⚡ %100 Çevrimdışı ve Gömülü Motor Devrede</div>
+                        </div>
+                    </div>
+
+                    <!-- Çeviri Modu Örnek Cümleler -->
+                    <div id="trans-examples-wrapper" style="margin-top: 20px; display: none; padding: 16px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px;">
+                        <h4 style="color: #94a3b8; margin-bottom: 8px; font-size: 0.9rem; letter-spacing: 0.5px;">KELİME KULLANIMI & BAĞLAMSAL ÖRNEK CÜMLELER:</h4>
+                        <div id="trans-examples-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Plyr Library Load via CDN -->
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <!-- Local Embedded Plyr Library -->
+    <script src="libs/plyr/plyr.polyfilled.js"></script>
     <script src="Renderer.js"></script>
     <script>
         function showSection(id) {

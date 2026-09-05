@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openFileDialog: (filters) => ipcRenderer.invoke('open-file-dialog', filters),
     saveFileDialog: (extension) => ipcRenderer.invoke('save-file-dialog', extension),
     processImageSharp: (data) => ipcRenderer.invoke('process-image-sharp', data),
+    convertDocument: (data) => ipcRenderer.invoke('convert-document', data),
     convertExcelToPdf: (data) => ipcRenderer.invoke('convert-excel-to-pdf', data),
     convertPdfToWord: (data) => ipcRenderer.invoke('convert-pdf-to-word', data),
     convertImagesToWord: (data) => ipcRenderer.invoke('convert-images-to-word', data),
@@ -14,6 +15,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     logToTerminal: (msg) => ipcRenderer.send('log-to-terminal', msg),
     readWord: (path) => ipcRenderer.invoke('read-word', path),
     saveToWord: (data) => ipcRenderer.invoke('save-to-word', data),
+    preparePlayableMedia: (filePath) => ipcRenderer.invoke('prepare-playable-media', filePath),
+    lookupDictionary: (data) => ipcRenderer.invoke('lookup-dictionary', data),
+    translateOffline: (data) => ipcRenderer.invoke('translate-text-offline', data),
+    synthesizeSpeech: (data) => ipcRenderer.invoke('synthesize-speech', data),
+    getLearnedStats: () => ipcRenderer.invoke('get-learned-stats'),
     windowMinimize: () => ipcRenderer.send('window-minimize'),
     windowMaximize: () => ipcRenderer.send('window-maximize'),
     windowClose: () => ipcRenderer.send('window-close'),
@@ -21,6 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Listeners
     onWindowMaximizedChanged: (callback) => ipcRenderer.on('window-maximized-changed', (event, value) => callback(value)),
     onConversionProgress: (callback) => ipcRenderer.on('conversion-progress', (event, value) => callback(value)),
+    onDocConversionProgress: (callback) => ipcRenderer.on('doc-conversion-progress', (event, value) => callback(value)),
     onConversionDone: (callback) => ipcRenderer.on('conversion-done', (event, path) => callback(path)),
     onConversionError: (callback) => ipcRenderer.on('conversion-error', (event, err) => callback(err)),
     // New feature: Social Media Downloader

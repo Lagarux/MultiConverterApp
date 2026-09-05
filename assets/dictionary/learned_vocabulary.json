@@ -1,0 +1,249 @@
+[
+  {
+    "word": "serendipity",
+    "tr": "tesadüf",
+    "meaningsList": [
+      "tesadüf"
+    ],
+    "type": "Öğrenilen Kelime",
+    "level": "Kelime Haznesine Eklendi",
+    "ipa": "/ˌsɛ.ɹən.ˈdɪ.pɪ.ti/",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/serendipity-au.mp3",
+    "examples": [],
+    "definitions": [
+      {
+        "pos": "noun",
+        "def": "A combination of events which have come together by chance to make a surprisingly good or wonderful outcome.",
+        "example": ""
+      },
+      {
+        "pos": "noun",
+        "def": "An unsought, unintended, and/or unexpected, but fortunate, discovery and/or learning experience that happens by accident.",
+        "example": ""
+      }
+    ],
+    "syn": [
+      "chance",
+      "luck"
+    ],
+    "sourceLang": "en",
+    "targetLang": "tr",
+    "learnedAt": "2026-09-03T09:03:16.895Z"
+  },
+  {
+    "word": "книга",
+    "tr": "kitap",
+    "meaningsList": [
+      "kitap"
+    ],
+    "type": "Öğrenilen Kelime",
+    "level": "Kelime Haznesine Eklendi",
+    "ipa": "",
+    "audioUrl": "",
+    "examples": [
+      {
+        "src": "Я часто использую слово \"книга\" в повседневной речи.",
+        "tgt": "Günlük konuşmalarımda \"kitap\" kelimesini sıkça kullanırım.",
+        "en": "Я часто использую слово \"книга\" в повседневной речи.",
+        "tr": "Günlük konuşmalarımda \"kitap\" kelimesini sıkça kullanırım."
+      },
+      {
+        "src": "Вы можете объяснить точное значение слова \"книга\"?",
+        "tgt": "\"kitap\" kelimesinin tam anlamını bana açıklayabilir misiniz?",
+        "en": "Вы можете объяснить точное значение слова \"книга\"?",
+        "tr": "\"kitap\" kelimesinin tam anlamını bana açıklayabilir misiniz?"
+      },
+      {
+        "src": "Это предложение служит отличным примером для слова \"книга\".",
+        "tgt": "Bu cümle, \"kitap\" kelimesi için harika bir örnektir.",
+        "en": "Это предложение служит отличным примером для слова \"книга\".",
+        "tr": "Bu cümle, \"kitap\" kelimesi için harika bir örnektir."
+      }
+    ],
+    "definitions": [],
+    "syn": [],
+    "sourceLang": "ru",
+    "targetLang": "tr",
+    "learnedAt": "2026-09-04T05:13:48.220Z"
+  },
+  {
+    "word": "Buch",
+    "tr": "Kitap",
+    "meaningsList": [
+      "Kitap"
+    ],
+    "type": "Öğrenilen Kelime",
+    "level": "Kelime Haznesine Eklendi",
+    "ipa": "",
+    "audioUrl": "",
+    "examples": [
+      {
+        "src": "Ich verwende das Wort \"Buch\" sehr oft im Alltag.",
+        "tgt": "Günlük hayatta \"Kitap\" kelimesini çok sık kullanırım.",
+        "en": "Ich verwende das Wort \"Buch\" sehr oft im Alltag.",
+        "tr": "Günlük hayatta \"Kitap\" kelimesini çok sık kullanırım."
+      },
+      {
+        "src": "Können Sie mir die genaue Bedeutung von \"Buch\" erklären?",
+        "tgt": "\"Kitap\" kelimesinin tam anlamını bana açıklayabilir misiniz?",
+        "en": "Können Sie mir die genaue Bedeutung von \"Buch\" erklären?",
+        "tr": "\"Kitap\" kelimesinin tam anlamını bana açıklayabilir misiniz?"
+      },
+      {
+        "src": "Dieser Satz ist ein gutes Beispiel für die Verwendung von \"Buch\".",
+        "tgt": "Bu cümle, \"Kitap\" kelimesinin kullanımı için iyi bir örnektir.",
+        "en": "Dieser Satz ist ein gutes Beispiel für die Verwendung von \"Buch\".",
+        "tr": "Bu cümle, \"Kitap\" kelimesinin kullanımı için iyi bir örnektir."
+      }
+    ],
+    "definitions": [],
+    "syn": [],
+    "sourceLang": "de",
+    "targetLang": "tr",
+    "learnedAt": "2026-09-04T05:13:48.512Z"
+  },
+  {
+    "word": "livre",
+    "tr": "pound",
+    "meaningsList": [
+      "pound"
+    ],
+    "type": "Öğrenilen Kelime",
+    "level": "Kelime Haznesine Eklendi",
+    "ipa": "",
+    "audioUrl": "",
+    "examples": [
+      {
+        "src": "J'utilise souvent le mot \"livre\" dans ma vie quotidienne.",
+        "tgt": "Günlük hayatımda \"pound\" kelimesini sıkça kullanırım.",
+        "en": "J'utilise souvent le mot \"livre\" dans ma vie quotidienne.",
+        "tr": "Günlük hayatımda \"pound\" kelimesini sıkça kullanırım."
+      },
+      {
+        "src": "Pouvez-vous m'expliquer la signification exacte de \"livre\"?",
+        "tgt": "Bana \"pound\" kelimesinin tam anlamını açıklayabilir misiniz?",
+        "en": "Pouvez-vous m'expliquer la signification exacte de \"livre\"?",
+        "tr": "Bana \"pound\" kelimesinin tam anlamını açıklayabilir misiniz?"
+      },
+      {
+        "src": "Cette phrase est un excellent exemple pour comprendre \"livre\".",
+        "tgt": "Bu cümle, \"pound\" kelimesini anlamak için harika bir örnektir.",
+        "en": "Cette phrase est un excellent exemple pour comprendre \"livre\".",
+        "tr": "Bu cümle, \"pound\" kelimesini anlamak için harika bir örnektir."
+      }
+    ],
+    "definitions": [],
+    "syn": [],
+    "sourceLang": "fr",
+    "targetLang": "tr",
+    "learnedAt": "2026-09-04T05:13:48.793Z"
+  },
+  {
+    "word": "Auto",
+    "tr": "Oto",
+    "meaningsList": [
+      "Oto"
+    ],
+    "type": "Öğrenilen Kelime",
+    "level": "Kelime Haznesine Eklendi",
+    "ipa": "",
+    "audioUrl": "",
+    "examples": [
+      {
+        "src": "Ich verwende das Wort \"Auto\" sehr oft im Alltag.",
+        "tgt": "Günlük hayatta \"Oto\" kelimesini çok sık kullanırım.",
+        "en": "Ich verwende das Wort \"Auto\" sehr oft im Alltag.",
+        "tr": "Günlük hayatta \"Oto\" kelimesini çok sık kullanırım."
+      },
+      {
+        "src": "Können Sie mir die genaue Bedeutung von \"Auto\" erklären?",
+        "tgt": "\"Oto\" kelimesinin tam anlamını bana açıklayabilir misiniz?",
+        "en": "Können Sie mir die genaue Bedeutung von \"Auto\" erklären?",
+        "tr": "\"Oto\" kelimesinin tam anlamını bana açıklayabilir misiniz?"
+      },
+      {
+        "src": "Dieser Satz ist ein gutes Beispiel für die Verwendung von \"Auto\".",
+        "tgt": "Bu cümle, \"Oto\" kelimesinin kullanımı için iyi bir örnektir.",
+        "en": "Dieser Satz ist ein gutes Beispiel für die Verwendung von \"Auto\".",
+        "tr": "Bu cümle, \"Oto\" kelimesinin kullanımı için iyi bir örnektir."
+      }
+    ],
+    "definitions": [],
+    "syn": [],
+    "sourceLang": "de",
+    "targetLang": "tr",
+    "learnedAt": "2026-09-04T05:14:47.720Z"
+  },
+  {
+    "word": "voiture",
+    "tr": "Otomobil",
+    "meaningsList": [
+      "Otomobil"
+    ],
+    "type": "Öğrenilen Kelime",
+    "level": "Kelime Haznesine Eklendi",
+    "ipa": "",
+    "audioUrl": "",
+    "examples": [
+      {
+        "src": "J'utilise souvent le mot \"voiture\" dans ma vie quotidienne.",
+        "tgt": "Günlük hayatımda \"Otomobil\" kelimesini sıkça kullanırım.",
+        "en": "J'utilise souvent le mot \"voiture\" dans ma vie quotidienne.",
+        "tr": "Günlük hayatımda \"Otomobil\" kelimesini sıkça kullanırım."
+      },
+      {
+        "src": "Pouvez-vous m'expliquer la signification exacte de \"voiture\"?",
+        "tgt": "Bana \"Otomobil\" kelimesinin tam anlamını açıklayabilir misiniz?",
+        "en": "Pouvez-vous m'expliquer la signification exacte de \"voiture\"?",
+        "tr": "Bana \"Otomobil\" kelimesinin tam anlamını açıklayabilir misiniz?"
+      },
+      {
+        "src": "Cette phrase est un excellent exemple pour comprendre \"voiture\".",
+        "tgt": "Bu cümle, \"Otomobil\" kelimesini anlamak için harika bir örnektir.",
+        "en": "Cette phrase est un excellent exemple pour comprendre \"voiture\".",
+        "tr": "Bu cümle, \"Otomobil\" kelimesini anlamak için harika bir örnektir."
+      }
+    ],
+    "definitions": [],
+    "syn": [],
+    "sourceLang": "fr",
+    "targetLang": "tr",
+    "learnedAt": "2026-09-04T05:14:48.244Z"
+  },
+  {
+    "word": "casa",
+    "tr": "aile",
+    "meaningsList": [
+      "aile"
+    ],
+    "type": "Öğrenilen Kelime",
+    "level": "Kelime Haznesine Eklendi",
+    "ipa": "",
+    "audioUrl": "",
+    "examples": [
+      {
+        "src": "Uso la palabra \"casa\" muy a menudo en la vida cotidiana.",
+        "tgt": "Günlük hayatta \"aile\" kelimesini çok sık kullanırım.",
+        "en": "Uso la palabra \"casa\" muy a menudo en la vida cotidiana.",
+        "tr": "Günlük hayatta \"aile\" kelimesini çok sık kullanırım."
+      },
+      {
+        "src": "¿Puedes explicarme el significado exacto de \"casa\"?",
+        "tgt": "Bana \"aile\" kelimesinin tam anlamını açıklayabilir misiniz?",
+        "en": "¿Puedes explicarme el significado exacto de \"casa\"?",
+        "tr": "Bana \"aile\" kelimesinin tam anlamını açıklayabilir misiniz?"
+      },
+      {
+        "src": "Esta frase es un gran ejemplo para entender \"casa\".",
+        "tgt": "Bu cümle, \"aile\" kelimesini anlamak için harika bir örnektir.",
+        "en": "Esta frase es un gran ejemplo para entender \"casa\".",
+        "tr": "Bu cümle, \"aile\" kelimesini anlamak için harika bir örnektir."
+      }
+    ],
+    "definitions": [],
+    "syn": [],
+    "sourceLang": "es",
+    "targetLang": "tr",
+    "learnedAt": "2026-09-04T05:14:48.682Z"
+  }
+]

@@ -15,12 +15,14 @@
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "docx": "^9.6.1",
+    "espeak-ng": "^1.0.2",
     "exceljs": "^4.3.0",
     "fluent-ffmpeg": "^2.1.2",
     "html-to-docx": "^1.8.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.5.31",
     "mammoth": "^1.6.0",
+    "mespeak": "^2.0.2",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
     "pdf2json": "^4.0.3",
@@ -38,7 +40,9 @@
   "build": {
     "asarUnpack": [
       "**/node_modules/plyr/dist/*.mjs",
-      "**/node_modules/@ffmpeg-installer/**/*"
+      "**/node_modules/@ffmpeg-installer/**/*",
+      "**/node_modules/espeak-ng/**/*",
+      "**/node_modules/yt-dlp-exec/bin/**/*"
     ],
     "afterPack": "scripts/after-pack.js",
     "extraResources": [
