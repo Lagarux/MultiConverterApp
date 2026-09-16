@@ -168,6 +168,10 @@ function getLearnedStats() {
     };
 }
 
+function getAllLearnedVocabulary() {
+    return LEARNED_VOCABULARY;
+}
+
 try {
     const oxfordPath = path.join(__dirname, 'assets', 'dictionary', 'oxford_en_tr.json');
     if (fs.existsSync(oxfordPath)) {
@@ -1190,6 +1194,7 @@ module.exports = {
     translateTextOffline,
     initLearnedVocabulary,
     getLearnedStats,
+    getAllLearnedVocabulary,
     synthesizeSpeech,
     OXFORD_DICT
 };

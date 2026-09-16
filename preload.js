@@ -20,6 +20,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     translateOffline: (data) => ipcRenderer.invoke('translate-text-offline', data),
     synthesizeSpeech: (data) => ipcRenderer.invoke('synthesize-speech', data),
     getLearnedStats: () => ipcRenderer.invoke('get-learned-stats'),
+    exportLearnedWords: (data) => ipcRenderer.invoke('export-learned-words', data),
+    showItemInFolder: (path) => ipcRenderer.invoke('show-item-in-folder', path),
+    openPath: (path) => ipcRenderer.invoke('open-path', path),
+    getMediaMetadata: (path) => ipcRenderer.invoke('get-media-metadata', path),
     windowMinimize: () => ipcRenderer.send('window-minimize'),
     windowMaximize: () => ipcRenderer.send('window-maximize'),
     windowClose: () => ipcRenderer.send('window-close'),
@@ -37,5 +41,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     downloadSocialMedia: (data) => ipcRenderer.send('download-social-media', data),
     onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (event, value) => callback(value)),
     onDownloadDone: (callback) => ipcRenderer.on('download-done', (event, path) => callback(path)),
-    onDownloadError: (callback) => ipcRenderer.on('download-error', (event, err) => callback(err))
+    onDownloadError: (callback) => ipcRenderer.on('download-error', (event, err) => callback(err)),
+
+    // New feature: Media Studio (Photo/Photoshop, Video/Audio Editor & Gemini AI)
+    saveEditedImage: (data) => ipcRenderer.invoke('save-edited-image', data),
+    geminiAiRetouch: (data) => ipcRenderer.invoke('gemini-ai-retouch', data),
+    extractVideoThumbnail: (data) => ipcRenderer.invoke('extract-video-thumbnail', data),
+    editVideoAdvanced: (data) => ipcRenderer.send('edit-video-advanced', data),
+    onVideoEditProgress: (callback) => ipcRenderer.on('video-edit-progress', (event, value) => callback(value)),
+    onVideoEditDone: (callback) => ipcRenderer.on('video-edit-done', (event, path) => callback(path)),
+    onVideoEditError: (callback) => ipcRenderer.on('video-edit-error', (event, err) => callback(err)),
+    editAudioAdvanced: (data) => ipcRenderer.send('edit-audio-advanced', data),
+    onAudioEditProgress: (callback) => ipcRenderer.on('audio-edit-progress', (event, value) => callback(value)),
+    onAudioEditDone: (callback) => ipcRenderer.on('audio-edit-done', (event, path) => callback(path)),
+    onAudioEditError: (callback) => ipcRenderer.on('audio-edit-error', (event, err) => callback(err))
 });
