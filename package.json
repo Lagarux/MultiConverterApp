@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "electron .",
+    "dev": "electron .",
     "icons:win": "node scripts/generate-ico.js",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",

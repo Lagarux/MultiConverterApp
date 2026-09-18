@@ -50,6 +50,8 @@ function getTaskbarIconPath() {
 
 // Windows GPU disk önbelleği kilitlenme ve "cache_util_win.cc: Unable to move the cache" (Access Denied 0x5) hatalarını engeller
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+// Windows occlusion hesaplamasından kaynaklanan arayüz titremesi ve pencere geçişlerindeki bileşen bozulmalarını engeller
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 let mainWindow = null;
 const gotTheLock = app.requestSingleInstanceLock();
@@ -323,21 +325,31 @@ ipcMain.on('convert-media', (event, { filePath, outputFormat, startTime, endTime
 });
 
 // Medya Oynatma Yardımcısı: Herhangi bir medya formatını Chromium ve Plyr'ın oynatabileceği formata anında hazırlar
+let currentPlaybackFfmpeg = null;
+
 ipcMain.handle('prepare-playable-media', async (event, filePath) => {
     try {
         if (!filePath || !fs.existsSync(filePath)) {
             return { success: false, error: 'Dosya bulunamadı.' };
         }
 
+        // Önceki çalışan oynatma FFmpeg işlemi varsa hemen iptal et (CPU kilitlenmesini ve kasmayı önler)
+        if (currentPlaybackFfmpeg) {
+            try {
+                currentPlaybackFfmpeg.kill('SIGKILL');
+            } catch(e) {}
+            currentPlaybackFfmpeg = null;
+        }
+
         const ext = path.extname(filePath).toLowerCase().replace('.', '');
-        // Chromium'un doğrudan oynatabildiği yerel web video ve ses formatları
-        const nativeFormats = ['mp4', 'webm', 'ogg', 'wav', 'mp3'];
+        // Chromium'un doğrudan donanım ivmesiyle oynatabildiği yerel web video ve ses formatları
+        const nativeFormats = ['mp4', 'm4v', 'webm', 'ogg', 'ogv', 'wav', 'mp3', 'flac', 'm4a', 'aac'];
         if (nativeFormats.includes(ext)) {
             return { success: true, url: `file://${filePath.replace(/\\/g, '/')}`, isNative: true };
         }
 
         // Chromium'un doğrudan desteklemediği formatlar:
-        // mkv, avi, mov, wmv, flv, ts, 3gp, ogv, m4v, flac, m4a, aac, opus, wma, aiff, ac3 vb.
+        // mkv, avi, mov, wmv, flv, ts, 3gp vb.
         const cacheDir = path.join(app.getPath('temp'), 'multiconverter_playback_cache');
         if (!fs.existsSync(cacheDir)) {
             fs.mkdirSync(cacheDir, { recursive: true });
@@ -354,17 +366,24 @@ ipcMain.handle('prepare-playable-media', async (event, filePath) => {
 
         // 1. Adım: Hızlı Kapsayıcı Dönüştürme (Remux - -c copy). Desteklenen H264/AAC akışlarında 0.1 saniye sürer!
         const tryRemux = () => new Promise((resolve, reject) => {
-            ffmpeg(filePath)
+            const command = ffmpeg(filePath)
                 .outputOptions(['-c', 'copy', '-movflags', '+faststart', '-y'])
                 .toFormat('mp4')
-                .on('end', () => resolve(true))
-                .on('error', (err) => reject(err))
-                .save(cacheFile);
+                .on('end', () => {
+                    if (currentPlaybackFfmpeg === command) currentPlaybackFfmpeg = null;
+                    resolve(true);
+                })
+                .on('error', (err) => {
+                    if (currentPlaybackFfmpeg === command) currentPlaybackFfmpeg = null;
+                    reject(err);
+                });
+            currentPlaybackFfmpeg = command;
+            command.save(cacheFile);
         });
 
         // 2. Adım: Süper Hızlı Kodlama (Ultrafast Transcode - MPEG4/Xvid, WMV2 vb. için anında web standardına çevirir)
         const tryTranscode = () => new Promise((resolve, reject) => {
-            ffmpeg(filePath)
+            const command = ffmpeg(filePath)
                 .videoCodec('libx264')
                 .audioCodec('aac')
                 .outputOptions([
@@ -374,9 +393,16 @@ ipcMain.handle('prepare-playable-media', async (event, filePath) => {
                     '-y'
                 ])
                 .toFormat('mp4')
-                .on('end', () => resolve(true))
-                .on('error', (err) => reject(err))
-                .save(cacheFile);
+                .on('end', () => {
+                    if (currentPlaybackFfmpeg === command) currentPlaybackFfmpeg = null;
+                    resolve(true);
+                })
+                .on('error', (err) => {
+                    if (currentPlaybackFfmpeg === command) currentPlaybackFfmpeg = null;
+                    reject(err);
+                });
+            currentPlaybackFfmpeg = command;
+            command.save(cacheFile);
         });
 
         try {
@@ -1442,72 +1468,202 @@ ipcMain.handle('extract-video-thumbnail', async (event, { filePath, timestamp = 
     }
 });
 
+// Gemini Vision & Language API Çağrıcı (v1 ve v1beta çift uç noktası desteği)
+async function callGeminiGenerateContent(apiKey, payload) {
+    const key = apiKey ? apiKey.trim() : '';
+    if (!key) throw new Error('Lütfen geçerli bir Google Gemini API anahtarı girin.');
+
+    // 1. Dinamik Model Listeleme (Hem v1 hem v1beta)
+    let candidateTargets = [];
+    try {
+        const [respBeta, respV1] = await Promise.allSettled([
+            fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`),
+            fetch(`https://generativelanguage.googleapis.com/v1/models?key=${encodeURIComponent(key)}`)
+        ]);
+
+        if (respBeta.status === 'fulfilled' && respBeta.value.ok) {
+            const dataBeta = await respBeta.value.json();
+            if (Array.isArray(dataBeta.models)) {
+                const usableBeta = dataBeta.models
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => ({ version: 'v1beta', model: m.name.replace(/^models\//, '') }));
+                candidateTargets.push(...usableBeta);
+            }
+        }
+
+        if (respV1.status === 'fulfilled' && respV1.value.ok) {
+            const dataV1 = await respV1.value.json();
+            if (Array.isArray(dataV1.models)) {
+                const usableV1 = dataV1.models
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => ({ version: 'v1', model: m.name.replace(/^models\//, '') }));
+                candidateTargets.push(...usableV1);
+            }
+        }
+    } catch (e) {
+        console.warn('Gemini ListModels sorgusu başarısız:', e.message);
+    }
+
+    // Öncelikli Adaylar: Flash 3.6 / 2.5 / 2.0 (en yeni/hızlı) -> Flash 1.5 v1 (kararlı) -> Pro modeller
+    const defaultTargets = [
+        { version: 'v1beta', model: 'gemini-3.6-flash' },
+        { version: 'v1beta', model: 'gemini-2.5-flash' },
+        { version: 'v1beta', model: 'gemini-2.0-flash' },
+        { version: 'v1',     model: 'gemini-1.5-flash' },
+        { version: 'v1beta', model: 'gemini-1.5-flash' },
+        { version: 'v1beta', model: 'gemini-1.5-flash-latest' },
+        { version: 'v1beta', model: 'gemini-2.0-flash-exp' },
+        { version: 'v1',     model: 'gemini-1.5-pro' },
+        { version: 'v1beta', model: 'gemini-1.5-pro-latest' },
+        { version: 'v1beta', model: 'gemini-1.5-flash-001' },
+        { version: 'v1beta', model: 'gemini-1.5-flash-002' }
+    ];
+
+    const targetMap = new Map();
+    defaultTargets.forEach(t => targetMap.set(`${t.version}/${t.model}`, t));
+    candidateTargets.forEach(t => {
+        const key = `${t.version}/${t.model}`;
+        if (!targetMap.has(key)) targetMap.set(key, t);
+    });
+
+    const finalTargets = Array.from(targetMap.values());
+    let lastErr = null;
+
+    for (const target of finalTargets) {
+        try {
+            const url = `https://generativelanguage.googleapis.com/${target.version}/models/${target.model}:generateContent?key=${encodeURIComponent(key)}`;
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) {
+                const errBody = await resp.text();
+                throw new Error(`[${target.version}/${target.model}] HTTP ${resp.status}: ${errBody}`);
+            }
+
+            const result = await resp.json();
+            const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!rawText) throw new Error(`Model ${target.model} yanıt üretmedi.`);
+
+            return { success: true, model: target.model, version: target.version, rawText };
+        } catch (err) {
+            lastErr = err;
+            console.warn(`Gemini (${target.version}/${target.model}) denenirken hata:`, err.message);
+        }
+    }
+
+    throw lastErr || new Error('Gemini yapay zeka servisine bağlanılamadı.');
+}
+
+// Gemini API Anahtarı Test Uç Noktası
+ipcMain.handle('test-gemini-connection', async (event, apiKey) => {
+    try {
+        const testPayload = {
+            contents: [
+                {
+                    parts: [{ text: "Respond with the single word: OK" }]
+                }
+            ],
+            generationConfig: { maxOutputTokens: 10, temperature: 0.1 }
+        };
+        const res = await callGeminiGenerateContent(apiKey, testPayload);
+        return { success: true, model: res.model, version: res.version };
+    } catch (err) {
+        console.error('test-gemini-connection hatası:', err.message);
+        return { success: false, error: err.message };
+    }
+});
+
+// Yardımcı: Gemini Yanıtından JSON Bloğunu Güvenle Ayıklama (Metin, Markdown veya Açıklama İçerse Dahi)
+function extractJsonFromText(rawText) {
+    if (!rawText || typeof rawText !== 'string') {
+        throw new Error('Gemini yapay zeka servisi boş bir yanıt döndürdü.');
+    }
+    let text = rawText.trim();
+
+    // 1. Markdown code-fence varsa içini çıkar
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (codeBlockMatch && codeBlockMatch[1]) {
+        text = codeBlockMatch[1].trim();
+    }
+
+    // 2. İlk { ve son } arasındaki nesne bloğunu dene
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        try {
+            return JSON.parse(text.substring(firstBrace, lastBrace + 1));
+        } catch (e) {
+            // parse hatası olursa devam et
+        }
+    }
+
+    // 3. İlk [ ve son ] arasındaki dizi bloğunu dene
+    const firstBracket = text.indexOf('[');
+    const lastBracket = text.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        try {
+            return JSON.parse(text.substring(firstBracket, lastBracket + 1));
+        } catch (e) {
+            // parse hatası olursa devam et
+        }
+    }
+
+    // 4. Doğrudan parse et
+    return JSON.parse(text);
+}
+
 // Gemini Vision Yapay Zeka Akıllı Rötuş & Analiz Motoru
 ipcMain.handle('gemini-ai-retouch', async (event, { apiKey, imageBase64, mode = 'auto_enhance', customPrompt = '' }) => {
     try {
-        if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
+        if (!apiKey || !apiKey.trim()) {
             throw new Error('Lütfen geçerli bir Google Gemini API anahtarı girin.');
         }
-        if (!imageBase64) throw new Error('İşlenecek görsel verisi bulunamadı.');
-
-        const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-
-        let promptText = '';
-        if (mode === 'auto_enhance') {
-            promptText = `Sen profesyonel bir fotoğraf editörü ve renk uzmanısın (Master Retoucher). Bu görselin ışığını, gölgelerini, renk sıcaklığını, kontrastını ve doygunluğunu analiz et.
-Görseli en estetik, dengeli ve kaliteli hale getirecek filtre değerlerini belirle.
-Aşağıdaki JSON formatında YALNIZCA geçerli bir JSON döndür, hiçbir markdown etiketi veya backtick (\\\`\\\`\\\`) ekleme:
-{
-  "brightness": 10,
-  "contrast": 15,
-  "saturation": 12,
-  "warmth": 5,
-  "sharpen": true,
-  "blur": 0,
-  "explanation": "Fotoğrafın renkleri ve aydınlatması profesyonelce dengelendi, detaylar netleştirildi."
-}`;
-        } else if (mode === 'custom_prompt') {
-            promptText = `Sen profesyonel bir görsel düzenleme ve stilize etme yapay zekasısın.
-Kullanıcının şu istek ve talimatını bu görsel üzerinde gerçekleştirecek filtre parametrelerini hesapla:
-TALİMAT: "${customPrompt}"
-
-Aşağıdaki JSON formatında YALNIZCA geçerli bir JSON döndür, hiçbir markdown etiketi veya backtick (\\\`\\\`\\\`) ekleme:
-{
-  "brightness": 0,
-  "contrast": 20,
-  "saturation": 10,
-  "warmth": 15,
-  "blur": 0,
-  "grayscale": false,
-  "sepia": false,
-  "invert": false,
-  "explanation": "Talimat doğrultusunda uygulanan değişikliklerin Türkçe kısa açıklaması"
-}`;
-        } else if (mode === 'creative_caption') {
-            promptText = `Sen yaratıcı bir sosyal medya ve tipografi uzmanısın. Bu görseli analiz et ve görselin üzerine yerleştirilebilecek 3 farklı yaratıcı, estetik başlık/alıntı önerisi üret.
-Aşağıdaki JSON formatında YALNIZCA geçerli bir JSON döndür, hiçbir markdown etiketi veya backtick (\\\`\\\`\\\`) ekleme:
-{
-  "suggestions": [
-    {
-      "title": "Kısa ve çarpıcı ana başlık",
-      "subtitle": "Açıklayıcı alt metin veya motto",
-      "font": "Inter",
-      "color": "#ffffff",
-      "bgColor": "rgba(0,0,0,0.6)"
-    }
-  ],
-  "photoInsight": "Görselin teması ve kompozisyonu hakkında 1 cümlelik Türkçe analiz"
-}`;
+        if (!imageBase64) {
+            throw new Error('Analiz edilecek görsel verisi bulunamadı.');
         }
+
+        // Base64 başlığını temizle (data:image/jpeg;base64, vs.)
+        const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        const mimeType = imageBase64.includes('image/png') ? 'image/png' : 'image/jpeg';
+
+        let prompt = "Bu fotoğrafı profesyonel bir fotoğraf editörü ve renk uzmanı gözüyle analiz et. ";
+        if (mode === 'auto_enhance') {
+            prompt += "Görselin pozlamasını, kontrastını, renk canlılığını ve renk sıcaklığını dengele. Aşırı karanlık veya aşırı patlamış alanları düzelt. ";
+        } else if (mode === 'warm_sunset') {
+            prompt += "Fotoğrafa sıcak gün batımı (golden hour) havası ver. Sıcaklığı ve doygunluğu artır, kontrastı hafif yumuşat. ";
+        } else if (mode === 'cool_cinematic') {
+            prompt += "Fotoğrafa soğuk, sinematik Hollywood teal & orange tonu uyarlaması için hafif soğuk renk sıcaklığı ve derin kontrast ver. ";
+        } else if (mode === 'vintage_bw') {
+            prompt += "Fotoğrafı dramatik, yüksek kontrastlı siyah beyaz bir sanat eserine dönüştür. ";
+        } else if (mode === 'custom_prompt' && customPrompt) {
+            prompt += `Kullanıcının özel isteği: "${customPrompt}". Bu isteğe göre en uygun filtre değerlerini belirle. `;
+        }
+
+        prompt += `\n\nYanıtını SADECE VE SADECE aşağıdaki JSON şemasında ver. Başka hiçbir açıklama metni, markdown bloğu veya yorum yazma:
+{
+  "brightness": 0, // -100 ile +100 arasında tamsayı (Örn: +15 veya -10)
+  "contrast": 0,   // -100 ile +100 arasında tamsayı (Örn: +20)
+  "saturation": 0, // -100 ile +100 arasında tamsayı (Örn: +25 veya -100 siyah beyaz için)
+  "warmth": 0,     // -100 ile +100 arasında tamsayı (Örn: +15 sıcak, -15 soğuk)
+  "blur": 0,       // 0 ile 20 arasında tamsayı (Örn: 0)
+  "sharpen": false, // true veya false (detayları keskinleştir)
+  "grayscale": false, // true veya false (siyah-beyaz)
+  "sepia": false,     // true veya false (nostaljik sepya)
+  "invert": false,    // true veya false
+  "explanation": "Yapılan düzenlemeyi ve nedenini anlatan 1-2 cümlelik Türkçe profesyonel açıklama."
+}`;
 
         const payload = {
             contents: [
                 {
                     parts: [
-                        { text: promptText },
+                        { text: prompt },
                         {
                             inlineData: {
-                                mimeType: "image/jpeg",
+                                mimeType: mimeType,
                                 data: cleanBase64
                             }
                         }
@@ -1516,45 +1672,15 @@ Aşağıdaki JSON formatında YALNIZCA geçerli bir JSON döndür, hiçbir markd
             ],
             generationConfig: {
                 temperature: 0.2,
-                maxOutputTokens: 1000
+                topK: 32,
+                topP: 0.95,
+                maxOutputTokens: 1024
             }
         };
 
-        const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
-        let lastErr = null;
-
-        for (const model of models) {
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey.trim())}`;
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!resp.ok) {
-                    const errBody = await resp.text();
-                    throw new Error(`Gemini API (${model}) [HTTP ${resp.status}]: ${errBody}`);
-                }
-
-                const result = await resp.json();
-                const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!rawText) throw new Error('Gemini API yanıt üretmedi.');
-
-                let cleanedJson = rawText.trim();
-                if (cleanedJson.startsWith('```')) {
-                    cleanedJson = cleanedJson.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-                }
-
-                const parsedData = JSON.parse(cleanedJson);
-                return { success: true, model, data: parsedData };
-            } catch (err) {
-                lastErr = err;
-                console.warn(`Model ${model} yanıt vermedi, sonrakine geçiliyor:`, err.message);
-            }
-        }
-
-        throw lastErr || new Error('Gemini yapay zeka servisine bağlanılamadı.');
+        const result = await callGeminiGenerateContent(apiKey, payload);
+        const parsedData = extractJsonFromText(result.rawText);
+        return { success: true, model: result.model, version: result.version, data: parsedData };
     } catch (err) {
         console.error('gemini-ai-retouch hatası:', err);
         return { success: false, error: err.message };
@@ -1565,7 +1691,19 @@ Aşağıdaki JSON formatında YALNIZCA geçerli bir JSON döndür, hiçbir markd
 // ✂️ YENİ ÖZELLİK: VİDEO & SES STÜDYOSU MOTORU (FFmpeg Gelişmiş Editör)
 // =========================================================================
 
-// Gelişmiş Video Düzenleyici (Kırpma, Filtre, Hız, Döndürme, Katman Yazı/PNG, Ses Miksleme, Birleştirme)
+// Yardımcı: Medya Dosyasının Tam Süresini (Duration) ffprobe ile Okuma
+function getMediaDuration(filePath) {
+    return new Promise((resolve) => {
+        ffmpeg.ffprobe(filePath, (err, metadata) => {
+            if (err || !metadata || !metadata.format || !metadata.format.duration) {
+                return resolve(null);
+            }
+            resolve(parseFloat(metadata.format.duration) || null);
+        });
+    });
+}
+
+// Gelişmiş Video Düzenleyici (Kırpma, Filtre, Fade In/Out, Hız, Döndürme, Çözünürlük, Kalite, Katman Yazı/PNG, Ses Miksleme, GIF)
 ipcMain.on('edit-video-advanced', async (event, data) => {
     const tempFilesToClean = [];
     try {
@@ -1575,8 +1713,7 @@ ipcMain.on('edit-video-advanced', async (event, data) => {
             trim = {},
             filters = {},
             overlayPngBase64,
-            audioOption = {},
-            appendVideos = []
+            audioOption = {}
         } = data;
 
         if (!filePath || !fs.existsSync(filePath)) {
@@ -1591,6 +1728,9 @@ ipcMain.on('edit-video-advanced', async (event, data) => {
         const tempDir = path.join(app.getPath('temp'), 'multiconverter_studio');
         if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
+        // Gerçek dosya süresini asenkron öğren
+        const totalDuration = await getMediaDuration(filePath) || (trim.totalDuration ? parseFloat(trim.totalDuration) : null);
+
         // Overlay Görseli (Eğer yazı veya filigran tuvali varsa)
         let overlayImgPath = null;
         if (overlayPngBase64) {
@@ -1602,21 +1742,24 @@ ipcMain.on('edit-video-advanced', async (event, data) => {
 
         let cmd = ffmpeg(filePath);
 
-        // Kırpma (Trim)
+        // Kırpma (Trim) ve Efektif Süre Tespiti
         const startTime = parseFloat(trim.start) || 0;
-        const endTime = trim.end != null && !Number.isNaN(parseFloat(trim.end)) ? parseFloat(trim.end) : null;
+        const endTime = trim.end != null && !Number.isNaN(parseFloat(trim.end)) && parseFloat(trim.end) > startTime ? parseFloat(trim.end) : null;
         let effectiveDuration = null;
 
         if (startTime > 0) {
             cmd.setStartTime(startTime);
         }
-        if (endTime != null && endTime > startTime) {
+        if (endTime != null) {
             effectiveDuration = endTime - startTime;
             cmd.duration(effectiveDuration);
+        } else if (totalDuration != null) {
+            effectiveDuration = totalDuration - startTime;
         }
 
         // Video Filtre Zinciri (Filter Graph)
         const vfList = [];
+        const afList = [];
 
         // 1. Parlaklık, Kontrast ve Doygunluk (eq)
         const bVal = (parseFloat(filters.brightness) || 0) / 100; // -1.0 .. 1.0
@@ -1641,12 +1784,40 @@ ipcMain.on('edit-video-advanced', async (event, data) => {
         if (filters.flipH) vfList.push('hflip');
         if (filters.flipV) vfList.push('vflip');
 
-        // 4. Hız Ayarı (Video PTS & Audio atempo)
+        // 4. Çözünürlük ve Sosyal Medya En-Boy Oranı (1080p, 720p, 9:16 Shorts/Reels, 1:1 Instagram)
+        const resPreset = filters.resolution || 'original';
+        if (resPreset === '1080p') {
+            vfList.push('scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black');
+        } else if (resPreset === '720p') {
+            vfList.push('scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black');
+        } else if (resPreset === '480p') {
+            vfList.push('scale=854:480:force_original_aspect_ratio=decrease,pad=854:480:(ow-iw)/2:(oh-ih)/2:black');
+        } else if (resPreset === '9:16') {
+            // TikTok, Instagram Reels, YouTube Shorts için 1080x1920 dikey
+            vfList.push('scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black');
+        } else if (resPreset === '1:1') {
+            // Instagram Kare Gönderi 1080x1080
+            vfList.push('scale=1080:1080:force_original_aspect_ratio=decrease,pad=1080:1080:(ow-iw)/2:(oh-ih)/2:black');
+        }
+
+        // 5. Video & Ses Fade In / Fade Out (Kararma / Açılma)
+        const vFadeIn = parseFloat(filters.fadeIn) || 0;
+        if (vFadeIn > 0) {
+            vfList.push(`fade=t=in:st=0:d=${vFadeIn.toFixed(2)}`);
+            afList.push(`afade=t=in:st=0:d=${vFadeIn.toFixed(2)}:curve=esin`);
+        }
+
+        const vFadeOut = parseFloat(filters.fadeOut) || 0;
+        if (vFadeOut > 0 && effectiveDuration != null && effectiveDuration > vFadeOut) {
+            const vFadeOutStart = effectiveDuration - vFadeOut;
+            vfList.push(`fade=t=out:st=${vFadeOutStart.toFixed(2)}:d=${vFadeOut.toFixed(2)}`);
+            afList.push(`afade=t=out:st=${vFadeOutStart.toFixed(2)}:d=${vFadeOut.toFixed(2)}:curve=esin`);
+        }
+
+        // 6. Hız Ayarı (Video PTS & Audio atempo)
         const speed = parseFloat(filters.speed) || 1.0;
-        const afList = [];
         if (speed > 0 && speed !== 1.0) {
             vfList.push(`setpts=${(1 / speed).toFixed(4)}*PTS`);
-            // Audio tempo filter supports 0.5 to 2.0. Chain if needed
             if (speed <= 2.0 && speed >= 0.5) {
                 afList.push(`atempo=${speed.toFixed(2)}`);
             } else if (speed > 2.0) {
@@ -1656,24 +1827,42 @@ ipcMain.on('edit-video-advanced', async (event, data) => {
             }
         }
 
-        // Overlay Girişi Varsa
+        // 7. Video Ters Çevirme (Reverse)
+        if (filters.reverse) {
+            vfList.push('reverse');
+            if (audioOption.mode !== 'mute') afList.push('areverse');
+        }
+
+        // 8. Overlay / Filigran Girişi ve Zaman Aralığı (enable='between(t,start,end)')
         if (overlayImgPath) {
             cmd.input(overlayImgPath);
-            vfList.push('overlay=0:0');
+            const oStart = parseFloat(filters.overlayStartTime) || 0;
+            const oEnd = parseFloat(filters.overlayEndTime) || 0;
+            if (oEnd > oStart) {
+                vfList.push(`overlay=0:0:enable='between(t,${oStart},${oEnd})'`);
+            } else if (oStart > 0) {
+                vfList.push(`overlay=0:0:enable='gte(t,${oStart})'`);
+            } else {
+                vfList.push('overlay=0:0');
+            }
+        }
+
+        // 9. Orijinal Video Sesi Seviyesi (Volume Booster)
+        const origVol = (parseFloat(audioOption.originalVolume) || 100) / 100;
+        if (origVol !== 1.0 && audioOption.mode !== 'mute' && audioOption.mode !== 'replace') {
+            afList.push(`volume=${origVol.toFixed(2)}`);
         }
 
         // İkincil Ses (Müzik / Ses Değiştirme veya Miksleme)
         if (audioOption.secondaryAudioPath && fs.existsSync(audioOption.secondaryAudioPath)) {
             cmd.input(audioOption.secondaryAudioPath);
             if (audioOption.mode === 'replace') {
-                // Sadece yeni sesi al
                 cmd.outputOptions(['-map', '0:v:0', '-map', '1:a:0', '-shortest']);
             } else if (audioOption.mode === 'mix') {
-                const origVol = parseFloat(audioOption.originalVolume) || 1.0;
-                const secVol = parseFloat(audioOption.secondaryVolume) || 0.6;
+                const sVol = (parseFloat(audioOption.secondaryVolume) || 60) / 100;
                 cmd.complexFilter([
-                    `[0:a]volume=${origVol}[a0]`,
-                    `[1:a]volume=${secVol}[a1]`,
+                    `[0:a]${afList.length > 0 ? afList.join(',') + ',' : ''}volume=${origVol.toFixed(2)}[a0]`,
+                    `[1:a]volume=${sVol.toFixed(2)}[a1]`,
                     `[a0][a1]amix=inputs=2:duration=first:dropout_transition=2[aout]`
                 ], ['aout']);
             }
@@ -1688,13 +1877,28 @@ ipcMain.on('edit-video-advanced', async (event, data) => {
             cmd.audioFilters(afList);
         }
 
-        // Format ve Codec Ayarları
+        // Kalite ve Kodlayıcı Ayarları (CRF: 18 Yüksek, 23 Dengeli, 28 Düşük Boyut)
+        const qualityCrf = filters.quality === 'high' ? 18 : (filters.quality === 'low' ? 28 : 23);
+
         if (format === 'mp4') {
-            cmd.videoCodec('libx264').audioCodec('aac').outputOptions(['-pix_fmt', 'yuv420p', '-movflags', '+faststart']);
+            cmd.videoCodec('libx264')
+               .audioCodec('aac')
+               .outputOptions([
+                   `-crf`, `${qualityCrf}`,
+                   `-preset`, `medium`,
+                   `-pix_fmt`, `yuv420p`,
+                   `-movflags`, `+faststart`
+               ]);
+        } else if (format === 'gif') {
+            // Yüksek kaliteli 2 geçişli paletleme ile animasyonlu GIF
+            cmd.noAudio()
+               .outputOptions([
+                   `-vf`, `${vfList.length > 0 ? vfList.join(',') + ',' : ''}fps=15,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`
+               ]);
         } else if (format === 'webm') {
             cmd.videoCodec('libvpx-vp9').audioCodec('libopus');
         } else if (format === 'mkv') {
-            cmd.videoCodec('libx264').audioCodec('aac');
+            cmd.videoCodec('libx264').audioCodec('aac').outputOptions([`-crf`, `${qualityCrf}`]);
         }
 
         event.reply('video-edit-progress', {
@@ -1738,7 +1942,43 @@ ipcMain.on('edit-video-advanced', async (event, data) => {
     }
 });
 
-// Gelişmiş Ses Düzenleyici (Kırpma, Ses Düzeyi Yükseltme/Normalizasyon, Fade In/Out, Hız, Arka Plan Sesi Ekleme)
+// Videodan Ses Ayıklama (Extract Audio from Video)
+ipcMain.handle('extract-audio-from-video', async (event, { videoPath, outputFormat = 'mp3' }) => {
+    try {
+        if (!videoPath || !fs.existsSync(videoPath)) throw new Error('Kaynak video dosyası bulunamadı.');
+        const parsed = path.parse(videoPath);
+        const fmt = (outputFormat || 'mp3').toLowerCase();
+
+        const { canceled, filePath } = await dialog.showSaveDialog({
+            title: 'Videodan Ayıklanan Sesi Kaydet',
+            defaultPath: `${parsed.name}_ses.${fmt}`,
+            filters: [{ name: `${fmt.toUpperCase()} Ses Dosyası`, extensions: [fmt] }]
+        });
+        if (canceled || !filePath) return { success: false, canceled: true };
+
+        await new Promise((resolve, reject) => {
+            let cmd = ffmpeg(videoPath).noVideo();
+            if (fmt === 'mp3') cmd.audioCodec('libmp3lame').audioBitrate(320);
+            else if (fmt === 'wav') cmd.audioCodec('pcm_s16le');
+            else if (fmt === 'flac') cmd.audioCodec('flac');
+            else if (fmt === 'm4a') cmd.audioCodec('aac').audioBitrate(256);
+            else if (fmt === 'ogg') cmd.audioCodec('libvorbis');
+
+            cmd.outputOptions('-y')
+               .on('end', resolve)
+               .on('error', reject)
+               .save(filePath);
+        });
+
+        const stats = fs.statSync(filePath);
+        return { success: true, path: filePath, size: stats.size };
+    } catch (err) {
+        console.error('extract-audio-from-video hatası:', err);
+        return { success: false, error: err.message };
+    }
+});
+
+// Gelişmiş Ses Düzenleyici (Kırpma, Normalizasyon, Fade In/Out, EQ, Denoise, Pitch, Ters Çevirme, Hız, Arka Plan Sesi)
 ipcMain.on('edit-audio-advanced', async (event, data) => {
     try {
         const {
@@ -1750,6 +1990,12 @@ ipcMain.on('edit-audio-advanced', async (event, data) => {
             fadeIn = 0, // sn
             fadeOut = 0, // sn
             speed = 1.0,
+            eqPreset = 'none',
+            loudnorm = false,
+            denoise = false,
+            pitch = 0,
+            reverse = false,
+            channels = 0,
             secondaryAudioPath,
             secondaryVolume = 50
         } = data;
@@ -1763,17 +2009,22 @@ ipcMain.on('edit-audio-advanced', async (event, data) => {
         const format = (outputFormat || 'mp3').toLowerCase();
         const outPath = targetPath || path.join(parsed.dir, `${parsed.name}_ses_studyo.${format}`);
 
+        // ffprobe ile kaynak dosyanın gerçek süresini asenkron al
+        const totalDuration = await getMediaDuration(filePath) || (trim.totalDuration ? parseFloat(trim.totalDuration) : null);
+
         let cmd = ffmpeg(filePath).noVideo();
 
-        // Kırpma
+        // Kırpma ve Efektif Süre Hesaplama
         const startTime = parseFloat(trim.start) || 0;
-        const endTime = trim.end != null && !Number.isNaN(parseFloat(trim.end)) ? parseFloat(trim.end) : null;
+        const endTime = trim.end != null && !Number.isNaN(parseFloat(trim.end)) && parseFloat(trim.end) > startTime ? parseFloat(trim.end) : null;
         let effectiveDuration = null;
 
         if (startTime > 0) cmd.setStartTime(startTime);
-        if (endTime != null && endTime > startTime) {
+        if (endTime != null) {
             effectiveDuration = endTime - startTime;
             cmd.duration(effectiveDuration);
+        } else if (totalDuration != null) {
+            effectiveDuration = totalDuration - startTime;
         }
 
         const afList = [];
@@ -1784,26 +2035,65 @@ ipcMain.on('edit-audio-advanced', async (event, data) => {
             afList.push(`volume=${volMultiplier.toFixed(2)}`);
         }
 
-        // 2. Fade In (Yumuşak Giriş)
+        // 2. Akıllı Ses Seviyesi Normalizasyonu (EBU R128 Broadcast Standard)
+        if (loudnorm) {
+            afList.push('loudnorm=I=-16:TP=-1.5:LRA=11');
+        }
+
+        // 3. Ekolayzır / Ses Karakteri Profilleri
+        if (eqPreset === 'bass') {
+            afList.push('bass=g=8:f=100:w=0.6');
+        } else if (eqPreset === 'treble') {
+            afList.push('treble=g=6:f=4000:w=0.5');
+        } else if (eqPreset === 'speech') {
+            // Vokal / Podcast netleştirme (düşük frekans uğultusunu kes, konuşma frekansını parlat)
+            afList.push('highpass=f=80,lowpass=f=8500,equalizer=f=1200:t=q:w=1.2:g=4');
+        } else if (eqPreset === 'radio') {
+            // Retro radyo / telefon filtresi
+            afList.push('highpass=f=300,lowpass=f=3400');
+        }
+
+        // 4. Dip Gürültü Temizleme (Denoise)
+        if (denoise) {
+            afList.push('afftdn=nf=-25');
+        }
+
+        // 5. Ses Tonu / Perdesi Değiştirme (Pitch Shift: -6 .. +6 yarım ton)
+        const pShift = parseFloat(pitch) || 0;
+        if (pShift !== 0) {
+            const pitchFactor = Math.pow(2, pShift / 12);
+            afList.push(`asetrate=44100*${pitchFactor.toFixed(4)},aresample=44100`);
+        }
+
+        // 6. Fade In (Yumuşak Giriş - esin eğrisi)
         const fIn = parseFloat(fadeIn) || 0;
         if (fIn > 0) {
-            afList.push(`afade=t=in:ss=0:d=${fIn.toFixed(1)}`);
+            afList.push(`afade=t=in:st=0:d=${fIn.toFixed(2)}:curve=esin`);
         }
 
-        // 3. Fade Out (Yumuşak Çıkış)
+        // 7. Fade Out (Yumuşak Çıkış - esin eğrisi)
         const fOut = parseFloat(fadeOut) || 0;
-        if (fOut > 0 && effectiveDuration && effectiveDuration > fOut) {
+        if (fOut > 0 && effectiveDuration != null && effectiveDuration > fOut) {
             const startFadeOut = effectiveDuration - fOut;
-            afList.push(`afade=t=out:st=${startFadeOut.toFixed(1)}:d=${fOut.toFixed(1)}`);
+            afList.push(`afade=t=out:st=${startFadeOut.toFixed(2)}:d=${fOut.toFixed(2)}:curve=esin`);
         }
 
-        // 4. Hız / Tempo
+        // 8. Hız / Tempo
         const spd = parseFloat(speed) || 1.0;
         if (spd > 0 && spd !== 1.0) {
             if (spd <= 2.0 && spd >= 0.5) afList.push(`atempo=${spd.toFixed(2)}`);
             else if (spd > 2.0) afList.push(`atempo=2.0,atempo=${(spd / 2.0).toFixed(2)}`);
             else if (spd < 0.5) afList.push(`atempo=0.5,atempo=${(spd / 0.5).toFixed(2)}`);
         }
+
+        // 9. Sesi Tersine Çevirme (Reverse)
+        if (reverse) {
+            afList.push('areverse');
+        }
+
+        // 10. Kanal Yönetimi (Mono / Stereo)
+        if (channels === 1) cmd.audioChannels(1);
+        else if (channels === 2) cmd.audioChannels(2);
 
         // İkinci Ses Miksleme (Arka Plan Müziği)
         if (secondaryAudioPath && fs.existsSync(secondaryAudioPath)) {
@@ -1840,7 +2130,7 @@ ipcMain.on('edit-audio-advanced', async (event, data) => {
                 event.reply('audio-edit-progress', {
                     percent: pct != null ? Math.min(99.5, Math.max(0.5, pct)) : null,
                     timemark: p.timemark || '00:00:00',
-                    stage: 'Ses dalgaları işleniyor ve filtreleniyor...'
+                    stage: 'Ses dalgaları ve efektler işleniyor...'
                 });
             })
             .on('end', () => {

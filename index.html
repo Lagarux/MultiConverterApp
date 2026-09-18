@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <title>MultiTool - Hepsi Bir Arada</title>
     <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: file: blob:; media-src 'self' file: blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: file: blob:; media-src 'self' file: blob:;">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600&family=Fira+Code:wght@500&family=Inter:wght@400;600;700&family=Montserrat:wght@500;700&family=Pacifico&family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@500;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="libs/plyr/plyr.css" />
     <link rel="stylesheet" href="libs/cropperjs/cropper.min.css" />
@@ -186,6 +189,7 @@
                         <p style="color:#94a3b8; font-size:0.9rem; margin:0;">Kırpma, filtreler, fırça çizimi, leke rötuşu, yazı ekleme ve Gemini AI akıllı fotoğraf iyileştirme.</p>
                     </div>
                     <div class="studio-header-actions">
+                        <button id="ps-new-canvas-btn" class="studio-btn" style="background:#334155;" title="Paint 3D benzeri yeni boş tuval oluştur">➕ Yeni Tuval</button>
                         <button id="ps-open-btn" class="studio-btn primary">📁 Resim Aç</button>
                         <button id="ps-undo-btn" class="studio-btn icon-btn" title="Geri Al (Ctrl+Z)">↩️ Geri</button>
                         <button id="ps-redo-btn" class="studio-btn icon-btn" title="İleri Al (Ctrl+Y)">↪️ İleri</button>
@@ -210,7 +214,7 @@
                             <span class="tool-icon">✨</span>
                             <span class="tool-label">Rötuş</span>
                         </button>
-                        <button class="studio-tool-btn" data-tool="eraser" title="Silgi (E)">
+                        <button class="studio-tool-btn" data-tool="eraser" title="Silgi (E) - Şeffaf / transparan siler">
                             <span class="tool-icon">🧹</span>
                             <span class="tool-label">Silgi</span>
                         </button>
@@ -218,7 +222,7 @@
                             <span class="tool-icon">🔤</span>
                             <span class="tool-label">Metin</span>
                         </button>
-                        <button class="studio-tool-btn" data-tool="shape" title="Şekil Ekle (U)">
+                        <button class="studio-tool-btn" data-tool="shape" title="Taşınabilir Şekil Ekle (U)">
                             <span class="tool-icon">📐</span>
                             <span class="tool-label">Şekil</span>
                         </button>
@@ -230,14 +234,35 @@
                             <span class="tool-icon">🖼️</span>
                             <span class="tool-label">Görsel</span>
                         </button>
+
+                        <!-- Photoshop Tarzı Sabit Renk Paleti (Her Zaman Görünür) -->
+                        <div class="ps-toolbar-color-container" title="Etkin Renk (Photoshop Paleti) - Rengi değiştirmek için tıklayın">
+                            <div class="ps-toolbar-swatch-wrap">
+                                <label for="ps-toolbar-color-picker" class="ps-color-swatch-box" id="ps-toolbar-swatch" style="background-color: #38bdf8;" title="Etkin Çizim ve Şekil Rengi"></label>
+                                <input type="color" id="ps-toolbar-color-picker" value="#38bdf8" style="opacity:0; width:0; height:0; position:absolute; pointer-events:none;">
+                            </div>
+                            <span class="ps-toolbar-swatch-label">Renk</span>
+                        </div>
                     </div>
 
                     <!-- Orta Alan: Üst Seçenekler Çubuğu + Tuval Alanı -->
                     <div class="studio-canvas-column">
                         <!-- Dinamik Araç Ayarları Çubuğu -->
                         <div id="studio-subbar" class="studio-subbar">
+                            <!-- Seçim Aracı Ayarları -->
+                            <div id="opt-select-group" class="subbar-group">
+                                <span style="color:#94a3b8; font-size:0.8rem;">👆 Görsel üzerinde bir alanı sürükleyerek seçin</span>
+                                <button id="ps-select-all-btn" class="studio-btn small" title="Tüm görseli seç (Ctrl+A)">🔲 Tümünü Seç</button>
+                                <div id="ps-selection-actions" style="display:none; gap:6px; align-items:center;">
+                                    <button id="ps-sel-crop-btn" class="studio-btn small success" title="Sadece seçili alanı bırakarak resmi kırpar">✂️ Seçili Alanı Kırp</button>
+                                    <button id="ps-sel-blur-btn" class="studio-btn small primary" title="Seçili alanı sansürler / bulanıklaştırır">🌫️ Bulanıklaştır (Sansür)</button>
+                                    <button id="ps-sel-clear-btn" class="studio-btn small danger" title="Seçili alanı siler">🧹 Seçili Alanı Sil</button>
+                                    <button id="ps-sel-invert-btn" class="studio-btn small" title="Seçili alanın renklerini tersine çevirir">⚡ Ters Çevir</button>
+                                    <button id="ps-sel-cancel-btn" class="studio-btn small" title="Seçimi kaldırır">✕ Seçimi Kaldır</button>
+                                </div>
+                            </div>
                             <!-- Fırça / Rötuş / Silgi Ayarları -->
-                            <div id="opt-brush-group" class="subbar-group">
+                            <div id="opt-brush-group" class="subbar-group" style="display:none;">
                                 <label>Renk:</label>
                                 <input type="color" id="ps-color-picker" value="#38bdf8">
                                 <label>Boyut:</label>
@@ -247,36 +272,75 @@
                                 <input type="range" id="ps-brush-opacity" min="10" max="100" value="100">
                                 <span id="ps-brush-opacity-val">%100</span>
                             </div>
-                            <!-- Metin Ayarları -->
+                            <!-- Metin Ayarları (Photoshop / Acrobat Tarzı) -->
                             <div id="opt-text-group" class="subbar-group" style="display:none;">
-                                <input type="text" id="ps-text-input" placeholder="Tuvale eklenecek yazıyı yazın..." style="min-width:180px;">
-                                <select id="ps-font-family">
-                                    <option value="Inter, sans-serif" selected>Inter (Modern)</option>
-                                    <option value="Impact, sans-serif">Impact (Başlık)</option>
-                                    <option value="Georgia, serif">Georgia (Zarif)</option>
-                                    <option value="'Courier New', monospace">Courier (Kod/Daktilo)</option>
-                                    <option value="cursive">Cursive (El Yazısı)</option>
+                                <button id="ps-add-textbox-btn" class="studio-btn small primary">➕ Yeni Metin</button>
+                                <select id="ps-font-family" title="Yazı Tipi" style="max-width:140px;">
+                                    <optgroup label="Modern Sans-Serif">
+                                        <option value="Inter, sans-serif" selected>Inter (Modern)</option>
+                                        <option value="'Poppins', sans-serif">Poppins (Şık & Geometrik)</option>
+                                        <option value="'Roboto', sans-serif">Roboto (Dengeli)</option>
+                                        <option value="'Montserrat', sans-serif">Montserrat (Temiz)</option>
+                                        <option value="'Segoe UI', sans-serif">Segoe UI (Windows)</option>
+                                        <option value="Arial, sans-serif">Arial (Standart)</option>
+                                        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                    </optgroup>
+                                    <optgroup label="Başlık & Poster">
+                                        <option value="Impact, sans-serif">Impact (Büyük Başlık)</option>
+                                        <option value="'Bebas Neue', sans-serif">Bebas Neue (Film Afişi)</option>
+                                    </optgroup>
+                                    <optgroup label="Zarif & Klasik (Serif)">
+                                        <option value="Georgia, serif">Georgia (Kitap Serif)</option>
+                                        <option value="'Playfair Display', serif">Playfair Display (Lüks)</option>
+                                        <option value="'Times New Roman', serif">Times New Roman</option>
+                                    </optgroup>
+                                    <optgroup label="Daktilo & Kod (Monospace)">
+                                        <option value="'Fira Code', monospace">Fira Code (Kod)</option>
+                                        <option value="'Courier New', monospace">Courier New (Daktilo)</option>
+                                        <option value="Consolas, monospace">Consolas</option>
+                                    </optgroup>
+                                    <optgroup label="El Yazısı & Eğlenceli">
+                                        <option value="'Pacifico', cursive">Pacifico (Retro Fırça)</option>
+                                        <option value="'Caveat', cursive">Caveat (Doğal El Yazısı)</option>
+                                        <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+                                    </optgroup>
                                 </select>
-                                <input type="number" id="ps-font-size" value="36" min="12" max="200" style="width:65px;">
-                                <input type="color" id="ps-font-color" value="#ffffff">
-                                <label style="display:flex; align-items:center; gap:4px; font-size:0.8rem; cursor:pointer;">
-                                    <input type="checkbox" id="ps-text-bg-check" checked> Arka Plan Kutusu
+                                <label style="font-size:0.8rem;">Boyut:</label>
+                                <input type="number" id="ps-font-size" value="48" min="10" max="600" style="width:58px;" title="Yazı Boyutu">
+                                <input type="color" id="ps-font-color" value="#ffffff" title="Yazı Rengi">
+                                <button id="ps-text-bold-btn" class="studio-btn small icon-btn active" title="Kalın (Bold)"><b>B</b></button>
+                                <button id="ps-text-italic-btn" class="studio-btn small icon-btn" title="İtalik (Italic)"><i>I</i></button>
+                                <select id="ps-text-align" title="Hizalama" style="width:65px;">
+                                    <option value="left" selected>Sol</option>
+                                    <option value="center">Orta</option>
+                                    <option value="right">Sağ</option>
+                                </select>
+                                <label style="display:flex; align-items:center; gap:4px; font-size:0.8rem; cursor:pointer;" title="Metnin arkasına yarı saydam kutu ekler">
+                                    <input type="checkbox" id="ps-text-bg-check"> Kutu Arka Planı
                                 </label>
-                                <button id="ps-apply-text-btn" class="studio-btn small primary">Metni Yerleştir</button>
+                                <button id="ps-commit-text-btn" class="studio-btn small success" style="display:none;" title="Metni görsele sabitle (Ctrl+Enter)">✓ Sabitle</button>
+                                <button id="ps-delete-textbox-btn" class="studio-btn small danger" style="display:none;" title="İptal et (Esc)">✕ İptal</button>
                             </div>
-                            <!-- Şekil Ayarları -->
+                            <!-- Şekil Ayarları (Taşınabilir & Yeniden Boyutlandırılabilir) -->
                             <div id="opt-shape-group" class="subbar-group" style="display:none;">
+                                <button id="ps-add-shape-btn" class="studio-btn small primary" title="Yeni taşınabilir şekil kutusu oluştur">➕ Yeni Şekil</button>
                                 <label>Tür:</label>
                                 <select id="ps-shape-type">
-                                    <option value="rect">Dikdörtgen (Çerçeve)</option>
+                                    <option value="rect" selected>Dikdörtgen (Çerçeve)</option>
                                     <option value="rect-fill">Dolu Dikdörtgen</option>
                                     <option value="circle">Daire / Elips</option>
+                                    <option value="circle-fill">Dolu Daire</option>
                                     <option value="arrow">İşaret Oku ➔</option>
                                     <option value="line">Düz Çizgi</option>
+                                    <option value="star">Yıldız ⭐</option>
                                 </select>
+                                <label>Renk:</label>
+                                <input type="color" id="ps-shape-color-picker" value="#38bdf8" title="Şekil Rengi (Photoshop Rengiyle Eşzamanlı)">
                                 <label>Kalınlık:</label>
-                                <input type="range" id="ps-shape-width" min="1" max="30" value="4">
+                                <input type="range" id="ps-shape-width" min="1" max="40" value="4">
                                 <span id="ps-shape-width-val">4px</span>
+                                <button id="ps-commit-shape-btn" class="studio-btn small success" style="display:none;" title="Şekli tuvale sabitle (Ctrl+Enter)">✓ Şekli Sabitle</button>
+                                <button id="ps-delete-shape-btn" class="studio-btn small danger" style="display:none;" title="Şekli iptal et (Esc)">✕ İptal</button>
                             </div>
                             <!-- Kırpma Ayarları -->
                             <div id="opt-crop-group" class="subbar-group" style="display:none;">
@@ -294,12 +358,11 @@
                             <!-- İkinci Görsel / Logo Ayarları -->
                             <div id="opt-sticker-group" class="subbar-group" style="display:none;">
                                 <button id="ps-pick-sticker-btn" class="studio-btn small primary">+ Logo / Resim Seç</button>
-                                <span id="ps-sticker-name" style="font-size:0.8rem; color:#aaa;">Görsel seçilmedi</span>
-                                <label>Boyut:</label>
-                                <input type="range" id="ps-sticker-scale" min="10" max="200" value="50">
-                                <span id="ps-sticker-scale-val">%50</span>
+                                <span id="ps-sticker-name" style="font-size:0.8rem; color:#aaa; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Görsel seçilmedi</span>
                                 <label>Opaklık:</label>
                                 <input type="range" id="ps-sticker-opacity" min="10" max="100" value="100">
+                                <button id="ps-commit-sticker-btn" class="studio-btn small success" style="display:none;">✓ Görseli Sabitle</button>
+                                <button id="ps-delete-sticker-btn" class="studio-btn small danger" style="display:none;">🗑️ Görseli Sil</button>
                             </div>
                         </div>
 
@@ -310,13 +373,58 @@
                                 <div class="drop-icon">🖼️</div>
                                 <h3>Düzenlemek İçin Görsel Sürükleyin veya Tıklayın</h3>
                                 <p>PNG, JPG, JPEG, WebP, GIF formatları desteklenir</p>
-                                <button class="studio-btn primary" onclick="document.getElementById('ps-open-btn').click()">Dosya Seç</button>
+                                <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                                    <button type="button" class="studio-btn primary" id="ps-dropzone-select-btn" onclick="event.stopPropagation(); document.getElementById('ps-open-btn').click();">📁 Dosya Seç</button>
+                                    <button type="button" class="studio-btn secondary" id="ps-dropzone-new-canvas-btn" onclick="event.stopPropagation(); openNewCanvasModal();">➕ Yeni Boş Tuval Aç</button>
+                                </div>
                             </div>
 
                             <!-- Tuval Sarmalayıcı -->
                             <div id="ps-canvas-wrapper" style="display:none;" class="canvas-wrapper">
                                 <canvas id="ps-main-canvas"></canvas>
                                 <canvas id="ps-overlay-canvas"></canvas>
+
+                                <!-- Etkileşimli & Taşınabilir Metin Kutusu Katmanı (Photoshop & Acrobat Tarzı) -->
+                                <div id="ps-interactive-textbox" class="ps-text-element-box" style="display:none;">
+                                    <div class="ps-text-floating-bar" id="ps-textbox-drag-handle">
+                                        <span class="ps-drag-grip" title="Metin kutusunu taşımak için basılı tutup sürükleyin">✥ Taşı</span>
+                                        <button id="ps-box-apply-btn" class="ps-pill-btn success" title="Metni görsele sabitle (Ctrl+Enter)">✓ Sabitle</button>
+                                        <button id="ps-box-close-btn" class="ps-pill-btn danger" title="İptal et (Esc)">✕</button>
+                                    </div>
+                                    <div id="ps-textbox-editable" contenteditable="true" spellcheck="false" class="ps-text-editable-area">Metninizi buraya yazın...</div>
+                                    <div class="ps-box-corner-handle" id="ps-textbox-resize-handle" title="Boyutlandır"></div>
+                                </div>
+
+                                <!-- Etkileşimli & Taşınabilir Şekil Katmanı (Paint 3D & Photoshop Tarzı) -->
+                                <div id="ps-interactive-shapebox" class="ps-shape-element-box" style="display:none;">
+                                    <div class="ps-text-floating-bar" id="ps-shapebox-drag-handle">
+                                        <span class="ps-drag-grip" title="Şekli taşımak için basılı tutup sürükleyin">✥ Taşı</span>
+                                        <button id="ps-box-shape-apply-btn" class="ps-pill-btn success" title="Şekli görsele sabitle (Ctrl+Enter)">✓ Sabitle</button>
+                                        <button id="ps-box-shape-close-btn" class="ps-pill-btn danger" title="İptal et (Esc)">✕</button>
+                                    </div>
+                                    <canvas id="ps-shapebox-canvas" style="width:100%; height:100%; display:block; pointer-events:none;"></canvas>
+                                    <div class="ps-box-corner-handle" id="ps-shapebox-resize-handle" title="Boyutlandır"></div>
+                                </div>
+
+                                <!-- Etkileşimli & Taşınabilir Logo/Görsel Katmanı (Photoshop & Acrobat Tarzı) -->
+                                <div id="ps-interactive-stickerbox" class="ps-sticker-element-box" style="display:none;">
+                                    <div class="ps-text-floating-bar" id="ps-stickerbox-drag-handle">
+                                        <span class="ps-drag-grip" title="Görseli taşımak için basılı tutup sürükleyin">✥ Taşı</span>
+                                        <button id="ps-box-sticker-apply-btn" class="ps-pill-btn success" title="Görseli görsele sabitle">✓ Sabitle</button>
+                                        <button id="ps-box-sticker-close-btn" class="ps-pill-btn danger" title="Görseli kaldır (Esc)">✕</button>
+                                    </div>
+                                    <img id="ps-stickerbox-img" src="" alt="Sticker" style="width:100%; height:100%; display:block; pointer-events:none; object-fit:contain;">
+                                    <div class="ps-box-corner-handle" id="ps-stickerbox-resize-handle" title="Boyutlandır"></div>
+                                </div>
+
+                                <!-- Seçim Yüzen Eylem Menüsü -->
+                                <div id="ps-floating-selection-menu" class="selection-floating-bar" style="display:none;">
+                                    <button id="ps-float-crop" class="float-btn success" title="Seçili Alanı Kırp">✂️ Kırp</button>
+                                    <button id="ps-float-blur" class="float-btn primary" title="Bulanıklaştır / Sansürle">🌫️ Bulanıklaştır</button>
+                                    <button id="ps-float-clear" class="float-btn danger" title="Seçili Alanı Sil">🧹 Sil</button>
+                                    <button id="ps-float-invert" class="float-btn" title="Renkleri Tersine Çevir">⚡ Ters Çevir</button>
+                                    <button id="ps-float-cancel" class="float-btn" title="Seçimi Kaldır">✕</button>
+                                </div>
                             </div>
                         </div>
 
@@ -333,11 +441,12 @@
                         </div>
                     </div>
 
-                    <!-- Sağ Panel: Filtreler & Gemini AI -->
+                    <!-- Sağ Panel: Filtreler, Tuval & Gemini AI -->
                     <div class="studio-inspector">
                         <div class="inspector-tabs">
-                            <button id="tab-btn-filters" class="inspector-tab-btn active" onclick="switchStudioTab('filters')">🎛️ Filtreler & Ayarlar</button>
-                            <button id="tab-btn-ai" class="inspector-tab-btn" onclick="switchStudioTab('ai')">✨ Gemini AI Rötuş</button>
+                            <button id="tab-btn-filters" class="inspector-tab-btn active" onclick="switchStudioTab('filters')">🎛️ Filtreler</button>
+                            <button id="tab-btn-canvas" class="inspector-tab-btn" onclick="switchStudioTab('canvas')">🖼️ Tuval</button>
+                            <button id="tab-btn-ai" class="inspector-tab-btn" onclick="switchStudioTab('ai')">✨ AI Rötuş</button>
                         </div>
 
                         <!-- Tab 1: Filtreler ve Renk Ayarları -->
@@ -410,7 +519,82 @@
                             </div>
                         </div>
 
-                        <!-- Tab 2: Gemini Yapay Zeka Rötuş -->
+                        <!-- Tab 2: Tuval & Saydam Arkaplan (Paint 3D Stili) -->
+                        <div id="inspector-tab-canvas" class="inspector-content">
+                            <!-- Paint 3D Saydam Tuval Seçeneği -->
+                            <div class="inspector-group">
+                                <h4>🏁 Paint 3D Saydam Tuval</h4>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding:8px 10px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid rgba(255,255,255,0.08);">
+                                    <div>
+                                        <div style="font-weight:600; font-size:0.85rem; color:#f1f5f9;">Saydam Tuval</div>
+                                        <div style="font-size:0.75rem; color:#94a3b8;">Arka planı dama desenli saydam yapar</div>
+                                    </div>
+                                    <label class="switch-toggle">
+                                        <input type="checkbox" id="ps-canvas-transparent-toggle" checked>
+                                        <span class="slider-toggle-round"></span>
+                                    </label>
+                                </div>
+
+                                <div id="ps-canvas-bg-color-group" style="display:none; margin-top:10px;">
+                                    <label style="font-size:0.8rem; color:#94a3b8;">Opak Arka Plan Rengi:</label>
+                                    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                                        <input type="color" id="ps-canvas-bg-color" value="#ffffff">
+                                        <button class="studio-btn small" onclick="setStudioCanvasBgColor('#ffffff')">Beyaz</button>
+                                        <button class="studio-btn small" onclick="setStudioCanvasBgColor('#000000')">Siyah</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tuval Boyutlandırma -->
+                            <div class="inspector-group">
+                                <h4>📐 Tuval Boyutlandırma</h4>
+                                <div style="display:flex; gap:10px; margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <label style="font-size:0.75rem; color:#94a3b8;">Genişlik (px):</label>
+                                        <input type="number" id="ps-canvas-w-input" min="50" max="8000" value="1920" style="width:100%; box-sizing:border-box;">
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="font-size:0.75rem; color:#94a3b8;">Yükseklik (px):</label>
+                                        <input type="number" id="ps-canvas-h-input" min="50" max="8000" value="1080" style="width:100%; box-sizing:border-box;">
+                                    </div>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+                                        <input type="checkbox" id="ps-canvas-ratio-lock" checked>
+                                        <span>En-boy oranını koru (Kilitli)</span>
+                                    </label>
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+                                        <input type="checkbox" id="ps-canvas-resample-img" checked>
+                                        <span>Görseli tuvalle birlikte ölçeklendir</span>
+                                    </label>
+                                </div>
+                                <button id="ps-apply-canvas-resize-btn" class="studio-btn primary" style="width:100%; justify-content:center;">
+                                    ✓ Tuval Boyutunu Değiştir
+                                </button>
+                            </div>
+
+                            <!-- Yön & Geometri -->
+                            <div class="inspector-group">
+                                <h4>🔄 Döndür & Yansıt</h4>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                    <button class="studio-btn small" onclick="rotatePhotoCanvas(-90)">↺ 90° Sola</button>
+                                    <button class="studio-btn small" onclick="rotatePhotoCanvas(90)">↻ 90° Sağa</button>
+                                    <button class="studio-btn small" onclick="flipPhotoCanvas('h')">⇄ Yatay Çevir</button>
+                                    <button class="studio-btn small" onclick="flipPhotoCanvas('v')">⇅ Dikey Çevir</button>
+                                </div>
+                            </div>
+
+                            <!-- Yeni Boş Tuval -->
+                            <div class="inspector-group">
+                                <button class="studio-btn success" onclick="openNewCanvasModal()" style="width:100%; justify-content:center;">
+                                    ➕ Yeni Boş Tuval Aç
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Gemini Yapay Zeka Rötuş -->
                         <div id="inspector-tab-ai" class="inspector-content">
                             <!-- API Key Alanı -->
                             <div class="ai-key-box">
@@ -421,6 +605,7 @@
                                 <div style="display:flex; gap:6px;">
                                     <input type="password" id="gemini-api-key-input" placeholder="AIzaSy..." style="flex:1; font-size:0.8rem; padding:6px 8px;">
                                     <button id="save-gemini-key-btn" class="studio-btn small primary">Kaydet</button>
+                                    <button id="test-gemini-key-btn" class="studio-btn small" style="background:#1e293b; border:1px solid #38bdf8; color:#38bdf8;" title="API anahtarını ve model bağlantısını test et">⚡ Test Et</button>
                                 </div>
                                 <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Anahtarınız yalnızca yerel olarak saklanır. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#38bdf8;">Ücretsiz API Anahtarı Al ➔</a></p>
                             </div>
@@ -510,6 +695,53 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Yeni Tuval Oluşturma Modalı (Paint 3D) -->
+                <div id="ps-new-canvas-modal" class="studio-modal" style="display:none;">
+                    <div class="studio-modal-content">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h3 style="margin:0;">🖼️ Yeni Tuval Oluştur (Paint 3D)</h3>
+                            <button class="modal-close-btn" onclick="closeNewCanvasModal()">✕</button>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label>Hazır Şablonlar:</label>
+                            <select id="ps-new-canvas-preset" style="width:100%;" onchange="applyNewCanvasPreset(this.value)">
+                                <option value="custom">Özel Boyut</option>
+                                <option value="1920x1080" selected>1920 × 1080 (Full HD / Yatay 16:9)</option>
+                                <option value="1280x720">1280 × 720 (HD / YouTube Thumbnail)</option>
+                                <option value="1080x1080">1080 × 1080 (Kare / Instagram Post 1:1)</option>
+                                <option value="1080x1920">1080 × 1920 (Dikey / Story & Reels 9:16)</option>
+                                <option value="800x600">800 × 600 (Standart Web)</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-bottom:12px;">
+                            <div style="flex:1;">
+                                <label>Genişlik (px):</label>
+                                <input type="number" id="ps-new-w" min="50" max="8000" value="1920" style="width:100%; box-sizing:border-box;">
+                            </div>
+                            <div style="flex:1;">
+                                <label>Yükseklik (px):</label>
+                                <input type="number" id="ps-new-h" min="50" max="8000" value="1080" style="width:100%; box-sizing:border-box;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom:15px;">
+                            <label>Arka Plan Türü:</label>
+                            <select id="ps-new-bg-type" style="width:100%;" onchange="toggleNewBgCustomColor(this.value)">
+                                <option value="transparent" selected>🏁 Saydam (Transparan - Paint 3D)</option>
+                                <option value="white">⚪ Beyaz</option>
+                                <option value="black">⚫ Siyah</option>
+                                <option value="custom">🎨 Özel Renk</option>
+                            </select>
+                            <div id="ps-new-custom-color-wrap" style="display:none; margin-top:8px;">
+                                <input type="color" id="ps-new-custom-color" value="#1e293b" style="width:100%; height:36px; padding:2px;">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button id="ps-create-canvas-btn" class="studio-btn success" style="flex:1; justify-content:center;" onclick="executeCreateNewCanvas()">Tuvali Oluştur</button>
+                            <button class="studio-btn" onclick="closeNewCanvasModal()" style="flex:1; justify-content:center;">Vazgeç</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- ========================================================= -->
@@ -538,28 +770,80 @@
 
                         <!-- Video Oynatıcı & Timeline Alanı -->
                         <div id="vs-player-container" style="display:none; margin-top:15px;">
-                            <video id="vs-video-element" controls style="width:100%; max-height:400px; background:#000; border-radius:8px;"></video>
+                            <div class="vs-player-video-wrapper" style="position:relative; width:100%; border-radius:8px; overflow:hidden; background:#000;">
+                                <video id="vs-video-element" controls style="width:100%; max-height:400px; display:block; background:#000; border-radius:8px;"></video>
+                                <canvas id="vs-live-overlay-canvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; border-radius:8px;"></canvas>
+                            </div>
                             
-                            <!-- Hassas Kırpma & Zaman Kontrolleri -->
-                            <div class="timeline-box" style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; border:1px solid #334155;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                    <span style="font-weight:600; font-size:0.9rem; color:#e2e8f0;">⏱️ Hassas Zaman Çizgisi & Kırpma:</span>
-                                    <span id="vs-current-timecode" style="font-family:monospace; color:#38bdf8; font-size:1rem; font-weight:700;">00:00.00 / 00:00.00</span>
-                                </div>
-                                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                                    <button id="vs-set-start-btn" class="studio-btn small success" style="flex:1;">[ ⏱️ Oynatılan Anı Başlangıç Yap ]</button>
-                                    <button id="vs-set-end-btn" class="studio-btn small danger" style="flex:1;">[ ⏱️ Oynatılan Anı Bitiş Yap ]</button>
-                                </div>
-                                <div style="display:flex; gap:15px; margin-top:10px; align-items:center;">
-                                    <div style="flex:1;">
-                                        <label style="font-size:0.8rem; color:#94a3b8;">Başlangıç Saniyesi:</label>
-                                        <input type="number" id="vs-trim-start-input" value="0" min="0" step="0.1" style="width:100%;">
+                            <!-- CapCut / Clipchamp / After Effects Tarzı İnteraktif Zaman Çizgisi -->
+                            <div class="vs-editor-timeline-panel">
+                                <!-- Zaman ve Taşıma (Transport) Çubuğu -->
+                                <div class="vs-transport-bar">
+                                    <div class="vs-timecode-display">
+                                        <span class="vs-tc-current" id="vs-tc-current">00:00:00.00</span>
+                                        <span class="vs-tc-divider">/</span>
+                                        <span class="vs-tc-total" id="vs-tc-total">00:00:00.00</span>
                                     </div>
-                                    <div style="flex:1;">
-                                        <label style="font-size:0.8rem; color:#94a3b8;">Bitiş Saniyesi:</label>
-                                        <input type="number" id="vs-trim-end-input" placeholder="Sonuna kadar" min="0" step="0.1" style="width:100%;">
+                                    <div class="vs-transport-controls">
+                                        <button type="button" class="vs-trans-btn" id="vs-btn-step-back-1s" title="1 Saniye Geri (-1s)">⏪ -1s</button>
+                                        <button type="button" class="vs-trans-btn" id="vs-btn-step-back-frame" title="1 Kare Geri (-0.1s)">◀ Kare</button>
+                                        <button type="button" class="vs-trans-btn primary" id="vs-btn-play-pause" title="Oynat / Duraklat (Boşluk Tuşu)">▶ Oynat</button>
+                                        <button type="button" class="vs-trans-btn" id="vs-btn-step-fwd-frame" title="1 Kare İleri (+0.1s)">Kare ▶</button>
+                                        <button type="button" class="vs-trans-btn" id="vs-btn-step-fwd-1s" title="1 Saniye İleri (+1s)">+1s ⏩</button>
+                                        <button type="button" class="vs-trans-btn success" id="vs-set-start-btn" title="O anki anı kırpma başlangıcı yap">[ ⏱️ Başlangıç</button>
+                                        <button type="button" class="vs-trans-btn danger" id="vs-set-end-btn" title="O anki anı kırpma bitişi yap">Bitiş ⏱️ ]</button>
+                                        <button type="button" class="vs-trans-btn secondary" id="vs-preview-trim-btn" title="Kırpılan aralığı baştan döngülü oynat">🔁 Aralığı Oynat</button>
                                     </div>
-                                    <button id="vs-preview-trim-btn" class="studio-btn small primary" style="margin-top:16px;">▶️ Kırpılan Aralığı Oynat</button>
+                                </div>
+
+                                <!-- Etkileşimli Timeline İzi ve Cetvel -->
+                                <div class="vs-timeline-box" id="vs-timeline-container">
+                                    <!-- Zaman Cetveli (Ruler) -->
+                                    <div class="vs-timeline-ruler" id="vs-timeline-ruler"></div>
+
+                                    <!-- Ana Video İzi (Track) -->
+                                    <div class="vs-timeline-track" id="vs-timeline-track">
+                                        <!-- Arka Plan Film Şeridi Deseni -->
+                                        <div class="vs-track-waveform-bg"></div>
+
+                                        <!-- Kırpılan Aktif Bölge (Vurgulanan Seçim Alanı) -->
+                                        <div class="vs-trim-range-highlight" id="vs-trim-highlight"></div>
+
+                                        <!-- Sol Kırpma Tutamacı (Start Handle) -->
+                                        <div class="vs-trim-handle start" id="vs-trim-handle-start" title="Başlangıç noktasını sürükleyin">
+                                            <div class="vs-handle-grip">❮</div>
+                                            <div class="vs-handle-tag" id="vs-handle-start-tag">0.0s</div>
+                                        </div>
+
+                                        <!-- Sağ Kırpma Tutamacı (End Handle) -->
+                                        <div class="vs-trim-handle end" id="vs-trim-handle-end" title="Bitiş noktasını sürükleyin">
+                                            <div class="vs-handle-grip">❯</div>
+                                            <div class="vs-handle-tag" id="vs-handle-end-tag">--</div>
+                                        </div>
+
+                                        <!-- Oynatma İğnesi / Scrubber (Playhead) -->
+                                        <div class="vs-playhead-cursor" id="vs-playhead">
+                                            <div class="vs-playhead-handle" title="Oynatma anını sürükleyin"></div>
+                                            <div class="vs-playhead-line"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hassas Sayısal Girişler (El ile girme & senkron) -->
+                                <div class="vs-trim-inputs-row">
+                                    <div class="vs-input-group">
+                                        <label>⏱️ Başlangıç (sn):</label>
+                                        <input type="number" id="vs-trim-start-input" value="0" min="0" step="0.1">
+                                    </div>
+                                    <div class="vs-input-group">
+                                        <label>⏱️ Bitiş (sn):</label>
+                                        <input type="number" id="vs-trim-end-input" placeholder="Sonuna kadar" min="0" step="0.1">
+                                    </div>
+                                    <div class="vs-input-group">
+                                        <label>Seçili Kırpma Süresi:</label>
+                                        <span id="vs-selected-duration-badge" class="badge-tag" style="background:rgba(56,189,248,0.2); color:#38bdf8;">-- sn</span>
+                                    </div>
+                                    <span id="vs-current-timecode" style="display:none;">00:00.00 / 00:00.00</span>
                                 </div>
                             </div>
                         </div>
@@ -592,17 +876,45 @@
                                 <input type="range" id="vs-saturate-slider" min="-50" max="50" value="0">
                             </div>
                             
-                            <div style="margin-top:12px; display:flex; gap:15px;">
+                            <div style="margin-top:12px; display:flex; gap:15px; flex-wrap:wrap;">
                                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
                                     <input type="checkbox" id="vs-filter-grayscale"> Siyah-Beyaz
                                 </label>
                                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
                                     <input type="checkbox" id="vs-filter-sepia"> Nostaljik Sepya
                                 </label>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="vs-reverse-check"> ⏪ Videoyu Tersine Çevir
+                                </label>
                             </div>
 
-                            <div style="margin-top:15px;">
-                                <label>Oynatma Hızı:</label>
+                            <!-- Video Çözünürlüğü ve Sosyal Medya Şablonu -->
+                            <div style="margin-top:14px;">
+                                <label>📐 Çözünürlük & En-Boy Oranı (Sosyal Medya):</label>
+                                <select id="vs-resolution-select">
+                                    <option value="original" selected>Orijinal Boyut (Varsayılan)</option>
+                                    <option value="1080p">1920 × 1080 (Full HD / 16:9 Yatay)</option>
+                                    <option value="720p">1280 × 720 (HD / 16:9)</option>
+                                    <option value="480p">854 × 480 (SD / Hızlı)</option>
+                                    <option value="9:16">1080 × 1920 (📱 9:16 Dikey / TikTok & Reels & Shorts)</option>
+                                    <option value="1:1">1080 × 1080 (⏹️ 1:1 Kare / Instagram Post)</option>
+                                </select>
+                            </div>
+
+                            <!-- Video Fade In & Fade Out (Kararma / Açılma) -->
+                            <div style="margin-top:14px; display:flex; gap:12px;">
+                                <div style="flex:1;">
+                                    <label style="font-size:0.8rem;">🎬 Fade In (Giriş Kararma sn):</label>
+                                    <input type="number" id="vs-fade-in-input" min="0" max="15" value="0" step="0.5" style="width:100%;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:0.8rem;">🎬 Fade Out (Çıkış Kararma sn):</label>
+                                    <input type="number" id="vs-fade-out-input" min="0" max="15" value="0" step="0.5" style="width:100%;">
+                                </div>
+                            </div>
+
+                            <div style="margin-top:14px;">
+                                <label>⚡ Oynatma Hızı:</label>
                                 <select id="vs-speed-select">
                                     <option value="0.5">0.5x (Ağır Çekim / Slow Motion)</option>
                                     <option value="0.75">0.75x (Hafif Yavaş)</option>
@@ -632,26 +944,173 @@
                         </div>
 
                         <!-- Sağ Sütun: Yazı / Altyazı Ekleme & Ses Yönetimi -->
-                        <div class="card">
-                            <h3>🔤 Video Üzerine Yazı & Filigran</h3>
-                            <input type="text" id="vs-overlay-text" placeholder="Video üstüne eklenecek başlık veya altyazı..." style="width:100%; box-sizing:border-box;">
-                            <div style="display:flex; gap:10px; margin-top:8px; align-items:center;">
-                                <label style="font-size:0.8rem;">Boyut:</label>
-                                <input type="number" id="vs-overlay-font-size" value="32" min="16" max="100" style="width:60px;">
-                                <label style="font-size:0.8rem;">Renk:</label>
-                                <input type="color" id="vs-overlay-color" value="#ffffff">
-                                <label style="font-size:0.8rem;">Konum:</label>
-                                <select id="vs-overlay-position" style="flex:1;">
-                                    <option value="bottom-center" selected>Alt Orta (Klasik Altyazı)</option>
-                                    <option value="top-center">Üst Orta (Başlık)</option>
-                                    <option value="top-left">Sol Üst (Logo/Filigran)</option>
-                                    <option value="bottom-right">Sağ Alt</option>
-                                    <option value="center">Tam Merkez</option>
-                                </select>
+                        <div class="card vs-overlay-studio-card">
+                            <div class="vs-card-header-with-tabs">
+                                <h3 style="margin:0;">🔤 Video Üzerine Yazı & Filigran</h3>
+                                <div class="vs-mini-tabs">
+                                    <button type="button" class="vs-mini-tab-btn active" id="vs-tab-btn-text" onclick="switchVsOverlayTab('text')">Metin & Altyazı</button>
+                                    <button type="button" class="vs-mini-tab-btn" id="vs-tab-btn-logo" onclick="switchVsOverlayTab('logo')">Logo & Görsel</button>
+                                </div>
+                            </div>
+
+                            <!-- 1. Metin & Altyazı Sekmesi -->
+                            <div id="vs-overlay-tab-text" class="vs-tab-pane active" style="margin-top:12px;">
+                                <div style="margin-bottom:10px;">
+                                    <label style="font-size:0.8rem; color:#94a3b8;">Metin / Altyazı İçeriği:</label>
+                                    <textarea id="vs-overlay-text" placeholder="Videoya eklenecek başlık veya altyazıyı yazın..." rows="2" style="width:100%; box-sizing:border-box; padding:8px; border-radius:6px; background:#1e293b; color:#fff; border:1px solid #475569; font-size:0.9rem; resize:vertical;"></textarea>
+                                </div>
+
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                                    <div>
+                                        <label style="font-size:0.8rem; color:#94a3b8;">Yazı Tipi (Font):</label>
+                                        <select id="vs-overlay-font-family" style="width:100%;">
+                                            <option value="Inter, sans-serif" selected>Inter (Modern Sans)</option>
+                                            <option value="'Poppins', sans-serif">Poppins (Temiz Şık)</option>
+                                            <option value="'Bebas Neue', sans-serif">Bebas Neue (Sinematik Başlık)</option>
+                                            <option value="Impact, sans-serif">Impact (Büyük Afiş)</option>
+                                            <option value="'Roboto', sans-serif">Roboto (Standart)</option>
+                                            <option value="'Montserrat', sans-serif">Montserrat</option>
+                                            <option value="'Playfair Display', serif">Playfair Display (Zarif Serif)</option>
+                                            <option value="'Fira Code', monospace">Fira Code (Kod)</option>
+                                            <option value="'Pacifico', cursive">Pacifico (Retro Fırça)</option>
+                                            <option value="'Caveat', cursive">Caveat (El Yazısı)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <div style="display:flex; justify-content:space-between;">
+                                            <label style="font-size:0.8rem; color:#94a3b8;">Boyut:</label>
+                                            <span id="vs-overlay-font-size-val" style="font-size:0.8rem; color:#38bdf8; font-weight:700;">36px</span>
+                                        </div>
+                                        <input type="range" id="vs-overlay-font-size" min="16" max="120" value="36" style="width:100%;">
+                                    </div>
+                                </div>
+
+                                <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <label style="font-size:0.8rem; color:#94a3b8;">Yazı Rengi:</label>
+                                        <input type="color" id="vs-overlay-color" value="#ffffff" title="Yazı Rengi">
+                                    </div>
+                                    <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+                                        <input type="checkbox" id="vs-overlay-stroke-check" checked>
+                                        <span>Dış Çerçeve (Stroke)</span>
+                                    </label>
+                                    <input type="color" id="vs-overlay-stroke-color" value="#000000" title="Kenarlık Rengi">
+                                </div>
+
+                                <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                                    <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+                                        <input type="checkbox" id="vs-overlay-bg-box-check" checked>
+                                        <span>Yarı Saydam Altyazı Kutusu</span>
+                                    </label>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span style="font-size:0.75rem; color:#94a3b8;">Opaklık:</span>
+                                        <input type="range" id="vs-overlay-bg-opacity" min="0" max="100" value="65" style="width:70px;">
+                                        <span id="vs-overlay-bg-opacity-val" style="font-size:0.75rem; min-width:30px; color:#38bdf8;">%65</span>
+                                    </div>
+                                </div>
+
+                                <!-- 9 Noktalı Pozisyon Matrisi -->
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.8rem; color:#94a3b8; display:block; margin-bottom:4px;">Ekranda Konumlandırma (9 Nokta Seçici):</label>
+                                    <div class="vs-9point-grid">
+                                        <button type="button" class="vs-pos-btn" data-pos="top-left" title="Sol Üst">↖</button>
+                                        <button type="button" class="vs-pos-btn" data-pos="top-center" title="Üst Orta">↑</button>
+                                        <button type="button" class="vs-pos-btn" data-pos="top-right" title="Sağ Üst">↗</button>
+                                        <button type="button" class="vs-pos-btn" data-pos="center-left" title="Sol Orta">←</button>
+                                        <button type="button" class="vs-pos-btn" data-pos="center" title="Merkez">•</button>
+                                        <button type="button" class="vs-pos-btn" data-pos="center-right" title="Sağ Orta">→</button>
+                                        <button type="button" class="vs-pos-btn" data-pos="bottom-left" title="Sol Alt">↙</button>
+                                        <button type="button" class="vs-pos-btn active" data-pos="bottom-center" title="Alt Orta (Klasik Altyazı)">↓</button>
+                                        <button type="button" class="vs-pos-btn" data-pos="bottom-right" title="Sağ Alt">↘</button>
+                                    </div>
+                                    <input type="hidden" id="vs-overlay-position" value="bottom-center">
+                                </div>
+
+                                <!-- Zamanlama (Timing) Kontrolü -->
+                                <div class="vs-timing-control-box" style="padding:10px; background:rgba(0,0,0,0.25); border:1px solid #334155; border-radius:8px;">
+                                    <label style="font-size:0.8rem; font-weight:600; color:#cbd5e1; margin-bottom:6px; display:block;">⏱️ Yazı Gösterim Zamanlaması:</label>
+                                    <div style="display:flex; gap:16px; margin-bottom:8px;">
+                                        <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                                            <input type="radio" name="vs-text-time-mode" value="all" checked onchange="toggleVsTextTimeInputs(false)"> Tüm Video Boyunca
+                                        </label>
+                                        <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                                            <input type="radio" name="vs-text-time-mode" value="custom" onchange="toggleVsTextTimeInputs(true)"> Belirli Aralıkta Göster
+                                        </label>
+                                    </div>
+                                    <div id="vs-text-custom-time-wrap" style="display:none; gap:10px; align-items:center;">
+                                        <div style="flex:1;">
+                                            <label style="font-size:0.75rem; color:#94a3b8;">Başlangıç (sn):</label>
+                                            <input type="number" id="vs-overlay-start-time" value="0" min="0" step="0.1" style="width:100%;">
+                                        </div>
+                                        <div style="flex:1;">
+                                            <label style="font-size:0.75rem; color:#94a3b8;">Bitiş (sn):</label>
+                                            <input type="number" id="vs-overlay-end-time" placeholder="Sonuna kadar" min="0" step="0.1" style="width:100%;">
+                                        </div>
+                                        <button type="button" class="studio-btn small" id="vs-grab-text-time-btn" style="margin-top:14px;" title="Şu anki video oynatma anını başlangıç yap">⏱️ Şu Anı Al</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Logo & Görsel Filigran Sekmesi -->
+                            <div id="vs-overlay-tab-logo" class="vs-tab-pane" style="display:none; margin-top:12px;">
+                                <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+                                    <button type="button" id="vs-pick-logo-btn" class="studio-btn primary small">+ Logo / PNG Görsel Seç</button>
+                                    <button type="button" id="vs-remove-logo-btn" class="studio-btn danger small" style="display:none;">✕ Logoyu Kaldır</button>
+                                </div>
+                                <div id="vs-logo-preview-row" style="display:none; gap:12px; align-items:center; margin-bottom:12px; padding:8px; background:rgba(255,255,255,0.04); border-radius:6px;">
+                                    <img id="vs-logo-thumb-img" src="" alt="Logo" style="max-width:50px; max-height:50px; object-fit:contain; border-radius:4px; background:rgba(0,0,0,0.5);">
+                                    <div style="overflow:hidden;">
+                                        <div id="vs-logo-filename" style="font-size:0.85rem; font-weight:600; color:#f1f5f9; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">logo.png</div>
+                                        <div style="font-size:0.75rem; color:#94a3b8;">Saydam arka planlı filigran</div>
+                                    </div>
+                                </div>
+
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                                    <div>
+                                        <div style="display:flex; justify-content:space-between;">
+                                            <label style="font-size:0.8rem; color:#94a3b8;">Logo Ölçeği:</label>
+                                            <span id="vs-logo-scale-val" style="font-size:0.8rem; color:#38bdf8; font-weight:700;">%25</span>
+                                        </div>
+                                        <input type="range" id="vs-logo-scale" min="5" max="80" value="25" style="width:100%;">
+                                    </div>
+                                    <div>
+                                        <div style="display:flex; justify-content:space-between;">
+                                            <label style="font-size:0.8rem; color:#94a3b8;">Logo Opaklığı:</label>
+                                            <span id="vs-logo-opacity-val" style="font-size:0.8rem; color:#38bdf8; font-weight:700;">%85</span>
+                                        </div>
+                                        <input type="range" id="vs-logo-opacity" min="10" max="100" value="85" style="width:100%;">
+                                    </div>
+                                </div>
+
+                                <!-- Logo 9 Nokta Konumu -->
+                                <div style="margin-bottom:10px;">
+                                    <label style="font-size:0.8rem; color:#94a3b8; display:block; margin-bottom:4px;">Logo Konumu (Varsayılan Sağ Üst):</label>
+                                    <div class="vs-9point-grid">
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="top-left" title="Sol Üst">↖</button>
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="top-center" title="Üst Orta">↑</button>
+                                        <button type="button" class="vs-logo-pos-btn active" data-pos="top-right" title="Sağ Üst (Klasik TV Logosu)">↗</button>
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="center-left" title="Sol Orta">←</button>
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="center" title="Merkez">•</button>
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="center-right" title="Sağ Orta">→</button>
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="bottom-left" title="Sol Alt">↙</button>
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="bottom-center" title="Alt Orta">↓</button>
+                                        <button type="button" class="vs-logo-pos-btn" data-pos="bottom-right" title="Sağ Alt">↘</button>
+                                    </div>
+                                    <input type="hidden" id="vs-logo-position" value="top-right">
+                                </div>
                             </div>
 
                             <h3 style="margin-top:20px;">🎵 Ses & Müzik Yönetimi</h3>
-                            <label>Orijinal Video Sesi:</label>
+                            <!-- Orijinal Ses Seviyesi (Volume Boost) -->
+                            <div class="slider-row" style="margin-bottom:10px;">
+                                <div class="slider-header">
+                                    <span style="font-size:0.85rem;">🔊 Orijinal Ses Seviyesi (Volume Booster):</span>
+                                    <span id="vs-orig-vol-val" class="slider-val">%100 (Normal)</span>
+                                </div>
+                                <input type="range" id="vs-orig-vol-slider" min="0" max="300" value="100">
+                            </div>
+
+                            <label>Ses Modu:</label>
                             <select id="vs-audio-mode">
                                 <option value="original" selected>Orijinal Sesi Koru</option>
                                 <option value="mute">Sesi Tamamen Kapat (Sessiz Video)</option>
@@ -669,15 +1128,33 @@
                                 </div>
                             </div>
 
-                            <!-- Dışa Aktarma Butonu -->
-                            <div style="margin-top:24px; padding-top:15px; border-top:1px solid #334155;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                    <label>Çıktı Formatı:</label>
-                                    <select id="vs-output-format">
-                                        <option value="mp4" selected>MP4 (En Uyumlu H.264)</option>
-                                        <option value="mkv">MKV (Yüksek Kalite)</option>
-                                        <option value="webm">WEBM (Modern Web)</option>
-                                    </select>
+                            <!-- Hızlı Ses Ayıklama Butonu -->
+                            <div style="margin-top:14px;">
+                                <button id="vs-extract-audio-btn" class="studio-btn secondary small" style="width:100%; justify-content:center;">
+                                    🎵 Videodan Sadece Sesi Ayıkla (MP3 / WAV Olarak Kaydet)
+                                </button>
+                            </div>
+
+                            <!-- Dışa Aktarma Butonu & Format / Kalite -->
+                            <div style="margin-top:20px; padding-top:15px; border-top:1px solid #334155;">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                                    <div>
+                                        <label style="font-size:0.8rem;">Çıktı Formatı:</label>
+                                        <select id="vs-output-format" style="width:100%;">
+                                            <option value="mp4" selected>MP4 (En Uyumlu H.264)</option>
+                                            <option value="mkv">MKV (Yüksek Kalite)</option>
+                                            <option value="webm">WEBM (Modern Web)</option>
+                                            <option value="gif">GIF (Animasyonlu Görsel)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.8rem;">Video Kalitesi / CRF:</label>
+                                        <select id="vs-quality-select" style="width:100%;">
+                                            <option value="high">Yüksek Kalite (CRF 18)</option>
+                                            <option value="balanced" selected>Dengeli (CRF 23 - Standart)</option>
+                                            <option value="low">Küçük Dosya Boyutu (CRF 28)</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <button id="vs-render-video-btn" class="studio-btn success" style="width:100%; justify-content:center; padding:12px; font-size:1rem;">
                                     🚀 Videoyu İşle ve Kaydet
@@ -711,6 +1188,19 @@
                         <div id="as-audio-info" style="display:none; margin-top:10px; font-size:0.9rem; color:#38bdf8;"></div>
 
                         <div id="as-controls-container" style="display:none; margin-top:15px;">
+                            <!-- Görsel Dalga Formu (Waveform) & Oynatıcı -->
+                            <div class="as-waveform-container" style="background:rgba(15,23,42,0.8); border:1px solid #334155; border-radius:8px; padding:12px; margin-bottom:15px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <span style="font-size:0.85rem; font-weight:600; color:#38bdf8;">📊 Canlı Ses Dalga Formu (Waveform):</span>
+                                    <span id="as-waveform-time-tag" style="font-size:0.8rem; font-family:monospace; color:#94a3b8;">00:00.0 / 00:00.0</span>
+                                </div>
+                                <canvas id="as-waveform-canvas" style="width:100%; height:75px; display:block; border-radius:6px; cursor:pointer; background:rgba(0,0,0,0.4);" title="Dalga formuna tıklayarak oynatma konumunu değiştirebilirsiniz"></canvas>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#64748b; margin-top:4px;">
+                                    <span>Tıklayarak sese atlayın</span>
+                                    <span>✂️ Kırpma alanları yeşil/kırmızı çizgilerle işaretlenir</span>
+                                </div>
+                            </div>
+
                             <audio id="as-audio-player" controls style="width:100%; margin-bottom:15px;"></audio>
 
                             <!-- Ses Kırpma -->
@@ -749,19 +1239,86 @@
                                         </div>
                                         <input type="range" id="as-speed-slider" min="0.5" max="2.0" step="0.05" value="1.0">
                                     </div>
+
+                                    <!-- Ses Tonu / Perdesi (Pitch Shift) -->
+                                    <div class="slider-row" style="margin-top:8px;">
+                                        <div class="slider-header">
+                                            <span>🎼 Ses Perdesi (Pitch Shift):</span>
+                                            <span id="as-pitch-val" class="slider-val">0 (Doğal Ton)</span>
+                                        </div>
+                                        <input type="range" id="as-pitch-slider" min="-6" max="6" step="1" value="0">
+                                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#64748b;">
+                                            <span>-6 (Derin / Kalın)</span>
+                                            <span>0</span>
+                                            <span>+6 (Helyum / İnce)</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Ses Kanalı & Tersine Çevirme -->
+                                    <div style="margin-top:12px; display:flex; gap:15px; align-items:center;">
+                                        <div style="flex:1;">
+                                            <label style="font-size:0.8rem;">Ses Kanalları:</label>
+                                            <select id="as-channels-select" style="width:100%;">
+                                                <option value="0" selected>Orijinal Kanallar</option>
+                                                <option value="2">Stereo (2 Kanal)</option>
+                                                <option value="1">Mono (1 Kanal - Podcast)</option>
+                                            </select>
+                                        </div>
+                                        <div style="flex:1; margin-top:16px;">
+                                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.85rem;">
+                                                <input type="checkbox" id="as-reverse-check"> ⏪ Sesi Ters Çevir
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <!-- Fade In & Fade Out -->
-                                    <div style="display:flex; gap:15px;">
-                                        <div style="flex:1;">
-                                            <label style="font-size:0.85rem;">Fade In (Giriş Yumuşatma sn):</label>
-                                            <input type="number" id="as-fade-in-input" min="0" max="15" value="0" step="0.5" style="width:100%;">
+                                    <!-- Fade In & Fade Out (Giriş & Çıkış Yumuşatma) -->
+                                    <div style="padding:10px; background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                                        <div style="display:flex; gap:15px;">
+                                            <div style="flex:1;">
+                                                <label style="font-size:0.85rem;">📈 Fade In (Yumuşak Giriş sn):</label>
+                                                <input type="number" id="as-fade-in-input" min="0" max="15" value="0" step="0.5" style="width:100%;">
+                                                <div style="display:flex; gap:4px; margin-top:4px;">
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-in-input').value=1">1s</button>
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-in-input').value=2">2s</button>
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-in-input').value=3">3s</button>
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-in-input').value=5">5s</button>
+                                                </div>
+                                            </div>
+                                            <div style="flex:1;">
+                                                <label style="font-size:0.85rem;">📉 Fade Out (Yumuşak Çıkış sn):</label>
+                                                <input type="number" id="as-fade-out-input" min="0" max="15" value="0" step="0.5" style="width:100%;">
+                                                <div style="display:flex; gap:4px; margin-top:4px;">
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-out-input').value=1">1s</button>
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-out-input').value=2">2s</button>
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-out-input').value=3">3s</button>
+                                                    <button type="button" class="studio-btn micro" onclick="document.getElementById('as-fade-out-input').value=5">5s</button>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div style="flex:1;">
-                                            <label style="font-size:0.85rem;">Fade Out (Çıkış Yumuşatma sn):</label>
-                                            <input type="number" id="as-fade-out-input" min="0" max="15" value="0" step="0.5" style="width:100%;">
-                                        </div>
+                                    </div>
+
+                                    <!-- Ekolayzır & Ses Karakteri Profilleri -->
+                                    <div style="margin-top:12px;">
+                                        <label style="font-size:0.85rem;">🎛️ Ekolayzır & Ses Karakteri:</label>
+                                        <select id="as-eq-preset" style="width:100%;">
+                                            <option value="none" selected>Doğal / Filtresiz</option>
+                                            <option value="bass">🔊 Derin Bas Güçlendirici (Bass Boost)</option>
+                                            <option value="treble">✨ Tiz & Kristal Parlaklık (Treble Boost)</option>
+                                            <option value="speech">🎙️ Vokal & Konuşma Netleştirici (Podcast / Röportaj)</option>
+                                            <option value="radio">📻 Retro Radyo / Telefon Efekti</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Akıllı İyileştirme Onay Kutuları -->
+                                    <div style="margin-top:12px; display:flex; gap:12px; flex-wrap:wrap;">
+                                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.82rem;" title="Yayın standartlarında (EBU R128) ses seviyesini dengeler">
+                                            <input type="checkbox" id="as-loudnorm-check"> 🎚️ Akıllı Ses Normalizasyonu (EBU R128)
+                                        </label>
+                                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.82rem;" title="Arka plandaki fan, klima ve elektrik uğultularını temizler">
+                                            <input type="checkbox" id="as-denoise-check"> 🔇 Dip Gürültü Temizleme (Denoise)
+                                        </label>
                                     </div>
 
                                     <!-- Arka Plan Sesi Miksleme -->
@@ -814,7 +1371,9 @@
                     <div id="player-drop-zone" class="drop-zone" style="padding: 15px; margin-bottom: 15px;">
                         Medya Dosyasını Buraya Sürükleyin veya Seçmek İçin Tıklayın (Tüm Formatlar Desteklenir)
                     </div>
-                    <video id="player" playsinline controls style="width:100%;"></video>
+                    <div id="player-wrapper" style="width: 100%; border-radius: 8px; overflow: hidden; background: #000; min-height: 240px; display: flex; align-items: center; justify-content: center;">
+                        <video id="player" playsinline controls style="width:100%;"></video>
+                    </div>
                     <div style="margin-top:10px;">
                         <button id="load-file-btn">Dosya Aç</button>
                         <span id="current-file-name" style="margin-left:10px; color:#aaa;"></span>

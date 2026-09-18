@@ -54,5 +54,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     editAudioAdvanced: (data) => ipcRenderer.send('edit-audio-advanced', data),
     onAudioEditProgress: (callback) => ipcRenderer.on('audio-edit-progress', (event, value) => callback(value)),
     onAudioEditDone: (callback) => ipcRenderer.on('audio-edit-done', (event, path) => callback(path)),
-    onAudioEditError: (callback) => ipcRenderer.on('audio-edit-error', (event, err) => callback(err))
+    onAudioEditError: (callback) => ipcRenderer.on('audio-edit-error', (event, err) => callback(err)),
+    extractAudioFromVideo: (data) => ipcRenderer.invoke('extract-audio-from-video', data),
+    testGeminiConnection: (apiKey) => ipcRenderer.invoke('test-gemini-connection', apiKey)
 });

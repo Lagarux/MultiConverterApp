@@ -840,17 +840,34 @@ input[type=range]#image-quality-slider::-webkit-slider-thumb:hover {
     color: #fff;
 }
 
-/* Fotoğraf Stüdyosu Ana Çalışma Alanı */
+/* Fotoğraf Stüdyosu Bölümü ve Ana Çalışma Alanı */
+#photo-studio-section.active {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 98px);
+    max-height: calc(100vh - 98px);
+    overflow: hidden;
+    padding-bottom: 0;
+}
+
+#photo-studio-section .studio-header {
+    flex-shrink: 0;
+    margin-bottom: 8px;
+}
+
 .studio-workspace {
     display: flex;
-    height: calc(100vh - 200px);
-    min-height: 520px;
+    flex: 1;
+    height: calc(100vh - 170px);
+    max-height: calc(100vh - 170px);
+    min-height: 480px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     overflow: hidden;
     background: rgba(15, 23, 42, 0.65);
     backdrop-filter: blur(12px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    margin-bottom: 0;
 }
 
 /* Sol Photoshop Araç Çubuğu */
@@ -915,15 +932,26 @@ input[type=range]#image-quality-slider::-webkit-slider-thumb:hover {
 }
 
 .studio-subbar {
-    min-height: 42px;
-    background: rgba(30, 41, 59, 0.85);
+    min-height: 44px;
+    background: rgba(22, 30, 46, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
-    padding: 0 12px;
+    padding: 2px 12px;
     gap: 12px;
     font-size: 0.82rem;
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.studio-subbar::-webkit-scrollbar {
+    height: 4px;
+}
+
+.studio-subbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
 }
 
 .subbar-group {
@@ -940,10 +968,10 @@ input[type=range]#image-quality-slider::-webkit-slider-thumb:hover {
     align-items: center;
     justify-content: center;
     position: relative;
-    background: #080c14;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 0);
+    background: #06090f;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 0);
     background-size: 24px 24px;
-    padding: 20px;
+    padding: 24px;
     user-select: none;
 }
 
@@ -955,7 +983,7 @@ input[type=range]#image-quality-slider::-webkit-slider-thumb:hover {
     padding: 40px;
     border: 2px dashed rgba(255, 255, 255, 0.15);
     border-radius: 12px;
-    max-width: 420px;
+    max-width: 440px;
     background: rgba(255, 255, 255, 0.02);
 }
 
@@ -976,17 +1004,36 @@ input[type=range]#image-quality-slider::-webkit-slider-thumb:hover {
     font-size: 0.85rem;
 }
 
+/* Paint 3D / Photoshop Damalı Saydamlık Arka Planı */
 .canvas-wrapper {
     position: relative;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85);
     border-radius: 4px;
     line-height: 0;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: auto;
+    background-color: #0d131f;
+    background-image: 
+        linear-gradient(45deg, rgba(255, 255, 255, 0.07) 25%, transparent 25%), 
+        linear-gradient(-45deg, rgba(255, 255, 255, 0.07) 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.07) 75%), 
+        linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.07) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    --ps-zoom: 1;
+}
+
+.canvas-wrapper.opaque-canvas {
+    background-image: none !important;
 }
 
 #ps-main-canvas {
     display: block;
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 #ps-overlay-canvas {
@@ -995,19 +1042,244 @@ input[type=range]#image-quality-slider::-webkit-slider-thumb:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: crosshair;
+}
+
+/* Etkileşimli Taşınabilir Metin, Şekil ve Logo Katmanları */
+.ps-text-element-box, .ps-shape-element-box, .ps-sticker-element-box {
+    position: absolute;
+    border: 1.5px dashed #38bdf8;
+    background: transparent;
+    border-radius: 4px;
+    z-index: 55;
+    min-width: 40px;
+    display: inline-block;
+    box-sizing: border-box;
+    cursor: move;
+    transition: border-color 0.15s ease;
+}
+
+.ps-text-element-box.is-dragging, .ps-shape-element-box.is-dragging, .ps-sticker-element-box.is-dragging {
+    border-color: #60a5fa;
+    border-style: solid;
+}
+
+/* Sabit Boyutlu Yüzen Araç Çubuğu */
+.ps-text-floating-bar {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: 16px;
+    padding: 3px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    pointer-events: auto;
+    backdrop-filter: blur(8px);
+    z-index: 65;
+    user-select: none;
+}
+
+.ps-drag-grip {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #38bdf8;
+    cursor: grab;
+    padding: 1px 4px;
+    display: flex;
+    align-items: center;
+    letter-spacing: 0.5px;
+}
+
+.ps-drag-grip:active {
+    cursor: grabbing;
+}
+
+.ps-pill-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.15s ease;
+}
+
+.ps-pill-btn.success {
+    background: #059669;
+}
+.ps-pill-btn.success:hover {
+    background: #047857;
+    transform: scale(1.05);
+}
+
+.ps-pill-btn.danger {
+    background: #dc2626;
+}
+.ps-pill-btn.danger:hover {
+    background: #b91c1c;
+    transform: scale(1.05);
+}
+
+.ps-text-editable-area {
+    padding: 4px 8px;
+    outline: none;
+    color: #ffffff;
+    font-size: 24px;
+    line-height: 1.25;
+    cursor: text;
+    user-select: text;
+    word-break: break-word;
+    white-space: pre-wrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8);
+    display: inline-block;
+    min-width: 40px;
+    box-sizing: border-box;
+}
+
+.ps-text-editable-area:empty:before {
+    content: "Metin yazın...";
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Köşe Boyutlandırma Tutamacı */
+.ps-box-corner-handle {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    background: #38bdf8;
+    border: 1.5px solid #ffffff;
+    border-radius: 2px;
+    cursor: se-resize;
+    z-index: 60;
+}
+
+/* Seçim Yüzen Eylem Çubuğu */
+.selection-floating-bar {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: 8px;
+    padding: 4px 6px;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+    z-index: 70;
+    backdrop-filter: blur(8px);
+    pointer-events: auto;
+}
+
+.float-btn {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.float-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.float-btn.primary {
+    background: #0284c7;
+    border-color: rgba(56, 189, 248, 0.4);
+}
+.float-btn.primary:hover {
+    background: #0369a1;
+}
+
+.float-btn.success {
+    background: #059669;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+.float-btn.success:hover {
+    background: #047857;
+}
+
+.float-btn.danger {
+    background: #dc2626;
+    border-color: rgba(239, 68, 68, 0.4);
+}
+.float-btn.danger:hover {
+    background: #b91c1c;
 }
 
 .studio-statusbar {
-    height: 26px;
-    background: rgba(15, 17, 21, 0.95);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    height: 38px;
+    min-height: 38px;
+    flex-shrink: 0;
+    background: rgba(15, 17, 21, 0.98);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 12px;
-    font-size: 0.75rem;
-    color: #64748b;
+    padding: 0 16px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+/* Paint 3D Tarzı Switch Toggle */
+.switch-toggle {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.switch-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-toggle-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #334155;
+    transition: .25s;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.slider-toggle-round:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .25s;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.switch-toggle input:checked + .slider-toggle-round {
+    background-color: #0284c7;
+    border-color: #38bdf8;
+}
+
+.switch-toggle input:checked + .slider-toggle-round:before {
+    transform: translateX(20px);
 }
 
 .zoom-controls {
@@ -1225,7 +1497,500 @@ input[type=range]#image-quality-slider::-webkit-slider-thumb:hover {
     color: #fff;
 }
 
+/* Mikro Preset Butonları (Fade In/Out Hazır Seçimleri) */
+.studio-btn.micro {
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
 
+.studio-btn.micro:hover {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #38bdf8;
+}
 
+/* Ses Dalga Formu (Waveform Canvas) */
+.as-waveform-container {
+    transition: border-color 0.2s ease;
+}
 
+.as-waveform-container:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+}
 
+#as-waveform-canvas {
+    image-rendering: auto;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================================================
+   🎨 PHOTOSHOP TARZI SABİT RENK PALETİ (TOOLBAR SWATCH)
+   ========================================================================= */
+.ps-toolbar-color-container {
+    margin-top: auto;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.ps-toolbar-swatch-wrap {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    padding: 2px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.ps-toolbar-swatch-wrap:hover {
+    transform: scale(1.08);
+    border-color: #38bdf8;
+}
+
+.ps-color-swatch-box {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+}
+
+.ps-toolbar-swatch-label {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================================================
+   🎬 CAPCUT / CLIPCHAMP / AFTER EFFECTS TARZI İNTERAKTİF TİMELİNE
+   ========================================================================= */
+.vs-editor-timeline-panel {
+    margin-top: 14px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Taşıma ve Zaman Kontrolleri Çubuğu */
+.vs-transport-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.vs-timecode-display {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: 'Consolas', 'Fira Code', monospace;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.vs-tc-current {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 0.5px;
+}
+
+.vs-tc-divider {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.vs-tc-total {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.vs-transport-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.vs-trans-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0;
+    box-shadow: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.vs-trans-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.vs-trans-btn.primary {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #fff;
+}
+
+.vs-trans-btn.primary:hover {
+    background: #0369a1;
+}
+
+.vs-trans-btn.success {
+    background: #059669;
+    border-color: #34d399;
+    color: #fff;
+}
+
+.vs-trans-btn.success:hover {
+    background: #047857;
+}
+
+.vs-trans-btn.danger {
+    background: #dc2626;
+    border-color: #f87171;
+    color: #fff;
+}
+
+.vs-trans-btn.danger:hover {
+    background: #b91c1c;
+}
+
+.vs-trans-btn.secondary {
+    background: rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.45);
+    color: #c4b5fd;
+}
+
+.vs-trans-btn.secondary:hover {
+    background: rgba(139, 92, 246, 0.4);
+    color: #fff;
+}
+
+/* Timeline Kutusu & Cetvel */
+.vs-timeline-box {
+    position: relative;
+    user-select: none;
+    margin-bottom: 12px;
+}
+
+.vs-timeline-ruler {
+    height: 20px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.4);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: none;
+    overflow: hidden;
+}
+
+.vs-ruler-tick {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.vs-ruler-tick.major {
+    height: 14px;
+    background: rgba(56, 189, 248, 0.6);
+}
+
+.vs-ruler-label {
+    position: absolute;
+    top: 2px;
+    font-size: 0.65rem;
+    font-family: monospace;
+    color: #94a3b8;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+/* Timeline İzi (Track) */
+.vs-timeline-track {
+    position: relative;
+    height: 54px;
+    background: #0b0f19;
+    border: 1px solid #334155;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    cursor: pointer;
+    overflow: visible;
+}
+
+.vs-track-waveform-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.15;
+    background-image: repeating-linear-gradient(90deg, #38bdf8 0, #38bdf8 2px, transparent 2px, transparent 8px);
+    pointer-events: none;
+}
+
+/* Kırpma Aralığı Vurgusu */
+.vs-trim-range-highlight {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0%;
+    width: 100%;
+    background: rgba(56, 189, 248, 0.18);
+    border-top: 2px solid #38bdf8;
+    border-bottom: 2px solid #38bdf8;
+    pointer-events: none;
+    box-sizing: border-box;
+    transition: background 0.1s ease;
+}
+
+/* Kırpma Tutamaçları (Handles) */
+.vs-trim-handle {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 16px;
+    background: #0284c7;
+    cursor: ew-resize;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    transition: background 0.15s ease;
+}
+
+.vs-trim-handle.start {
+    left: 0%;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background: #059669;
+}
+
+.vs-trim-handle.end {
+    left: 100%;
+    transform: translateX(-100%);
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    background: #dc2626;
+}
+
+.vs-trim-handle:hover {
+    filter: brightness(1.25);
+    width: 18px;
+}
+
+.vs-handle-grip {
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: bold;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.vs-handle-tag {
+    position: absolute;
+    bottom: -22px;
+    background: rgba(15, 23, 42, 0.95);
+    color: #fff;
+    font-size: 0.68rem;
+    font-family: monospace;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translateX(-50%);
+    left: 50%;
+}
+
+/* Oynatma Kafası (Playhead Scrubber) */
+.vs-playhead-cursor {
+    position: absolute;
+    top: -18px;
+    bottom: -6px;
+    width: 2px;
+    left: 0%;
+    pointer-events: none;
+    z-index: 30;
+    transition: none;
+}
+
+.vs-playhead-handle {
+    position: absolute;
+    top: 0;
+    left: -7px;
+    width: 16px;
+    height: 16px;
+    background: #f43f5e;
+    clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
+    cursor: ew-resize;
+    pointer-events: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    transition: transform 0.1s ease;
+}
+
+.vs-playhead-handle:hover {
+    transform: scale(1.2);
+}
+
+.vs-playhead-line {
+    position: absolute;
+    top: 15px;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background: #f43f5e;
+    box-shadow: 0 0 6px rgba(244, 63, 94, 0.8);
+}
+
+/* Sayısal Girdi Satırı */
+.vs-trim-inputs-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 6px;
+}
+
+.vs-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vs-input-group label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.vs-input-group input {
+    width: 80px;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
+
+/* =========================================================================
+   🔤 GELİŞMİŞ VİDEO YAZI & FİLİGRAN STÜDYOSU (9-POINT GRID)
+   ========================================================================= */
+.vs-overlay-studio-card {
+    position: relative;
+}
+
+.vs-card-header-with-tabs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 10px;
+}
+
+.vs-mini-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vs-mini-tab-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 0;
+    box-shadow: none;
+    transition: all 0.15s ease;
+}
+
+.vs-mini-tab-btn:hover {
+    color: #fff;
+}
+
+.vs-mini-tab-btn.active {
+    background: #0284c7;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4);
+}
+
+/* 9-Point Alignment Grid */
+.vs-9point-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 38px);
+    gap: 4px;
+    width: fit-content;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vs-pos-btn, .vs-logo-pos-btn {
+    width: 38px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 0;
+    box-shadow: none;
+    transition: all 0.15s ease;
+}
+
+.vs-pos-btn:hover, .vs-logo-pos-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.vs-pos-btn.active, .vs-logo-pos-btn.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
